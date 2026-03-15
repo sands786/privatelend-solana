@@ -6,195 +6,140 @@
   <title>PrivateLend — Privacy-First Lending on Solana x Arcium</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600&display=swap" rel="stylesheet" />
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-
     :root {
-      --bg: #0a0e0c;
-      --surface: #111714;
-      --surface2: #161d19;
-      --border: rgba(29,158,117,0.15);
-      --border2: rgba(29,158,117,0.3);
-      --green: #1D9E75;
-      --green-light: #5DCAA5;
-      --green-dim: rgba(29,158,117,0.1);
-      --blue: #378ADD;
-      --blue-dim: rgba(55,138,221,0.1);
-      --warn: #EF9F27;
-      --warn-dim: rgba(239,159,39,0.1);
-      --danger: #E24B4A;
-      --danger-dim: rgba(226,75,74,0.1);
-      --text: #e8f0eb;
-      --text2: #8fa89a;
-      --text3: #556b61;
-      --mono: 'IBM Plex Mono', monospace;
-      --sans: 'Syne', sans-serif;
+      --bg: #0a0e0c; --surface: #111714; --surface2: #161d19;
+      --border: rgba(29,158,117,0.15); --border2: rgba(29,158,117,0.3);
+      --green: #1D9E75; --green-light: #5DCAA5; --green-dim: rgba(29,158,117,0.1);
+      --blue: #378ADD; --blue-dim: rgba(55,138,221,0.1);
+      --warn: #EF9F27; --warn-dim: rgba(239,159,39,0.1);
+      --danger: #E24B4A; --danger-dim: rgba(226,75,74,0.1);
+      --text: #e8f0eb; --text2: #8fa89a; --text3: #556b61;
+      --mono: 'IBM Plex Mono', monospace; --sans: 'Syne', sans-serif;
     }
-
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-    }
-
-    /* Subtle grid background */
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; }
     body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      background-image:
-        linear-gradient(rgba(29,158,117,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(29,158,117,0.03) 1px, transparent 1px);
+      content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0;
+      background-image: linear-gradient(rgba(29,158,117,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(29,158,117,0.03) 1px, transparent 1px);
       background-size: 40px 40px;
-      pointer-events: none;
-      z-index: 0;
     }
-
     .app { position: relative; z-index: 1; max-width: 1000px; margin: 0 auto; padding: 2rem 1.5rem; }
-
-    /* Header */
-    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 3rem; }
+    header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 2rem; flex-wrap: wrap; gap: 12px; }
     .logo { display: flex; align-items: center; gap: 12px; }
     .logo-mark { width: 36px; height: 36px; background: var(--green); border-radius: 8px; display: flex; align-items: center; justify-content: center; }
     .logo-mark svg { width: 20px; height: 20px; fill: #0a0e0c; }
     .logo-name { font-size: 20px; font-weight: 600; letter-spacing: -0.5px; }
     .logo-tag { font-family: var(--mono); font-size: 11px; color: var(--green); background: var(--green-dim); border: 1px solid var(--border); padding: 3px 10px; border-radius: 20px; }
-
-    .wallet-btn {
-      font-family: var(--mono);
-      font-size: 12px;
-      padding: 10px 18px;
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      background: var(--surface);
-      color: var(--text);
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      gap: 8px;
-      transition: border-color 0.2s, background 0.2s;
-    }
+    .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+    .net-badge { font-family: var(--mono); font-size: 11px; padding: 8px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--blue); display: flex; align-items: center; gap: 6px; }
+    .net-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .wallet-btn { font-family: var(--mono); font-size: 12px; padding: 10px 18px; border: 1px solid var(--border2); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
     .wallet-btn:hover { border-color: var(--green); background: var(--green-dim); }
+    .wallet-btn.connected { border-color: var(--green); color: var(--green-light); }
     .w-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
-    .w-dot.connected { background: var(--green); box-shadow: 0 0 6px var(--green); }
-
-    /* Privacy banner */
-    .privacy-banner {
-      display: flex;
-      gap: 14px;
-      background: var(--green-dim);
-      border: 1px solid var(--border2);
-      border-radius: 12px;
-      padding: 16px 20px;
-      margin-bottom: 2rem;
-    }
-    .shield { flex-shrink: 0; width: 20px; height: 20px; margin-top: 2px; }
-    .privacy-banner p { font-size: 13px; color: var(--text2); line-height: 1.6; }
+    .w-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 100; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 1.5rem; width: 340px; max-width: 90vw; }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .modal-sub { font-size: 11px; color: var(--text3); margin-bottom: 1.25rem; font-family: var(--mono); }
+    .wallet-option { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; background: var(--surface2); }
+    .wallet-option:hover { border-color: var(--green); background: var(--green-dim); }
+    .wallet-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .wallet-info { flex: 1; }
+    .wallet-name { font-size: 14px; font-weight: 500; }
+    .wallet-desc { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+    .ws-detected { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
+    .ws-install { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
+    .modal-close { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-family: var(--mono); font-size: 12px; cursor: pointer; margin-top: 4px; transition: all 0.2s; }
+    .modal-close:hover { background: var(--surface2); }
+    .balance-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .bal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 150px; }
+    .bal-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: var(--surface2); flex-shrink: 0; }
+    .bal-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+    .bal-value { font-size: 15px; font-weight: 600; }
+    .airdrop-btn { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--green-light); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .airdrop-btn:hover:not(:disabled) { background: var(--green-dim); }
+    .airdrop-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .privacy-banner { display: flex; gap: 14px; background: var(--green-dim); border: 1px solid var(--border2); border-radius: 12px; padding: 14px 18px; margin-bottom: 1.5rem; }
+    .shield { flex-shrink: 0; width: 18px; height: 18px; margin-top: 2px; }
+    .privacy-banner p { font-size: 12px; color: var(--text2); line-height: 1.6; }
     .privacy-banner strong { color: var(--green-light); font-weight: 500; }
-
-    /* Stats */
-    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 2rem; }
-    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1.1rem; }
-    .stat-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
-    .stat-value { font-size: 22px; font-weight: 600; color: var(--text); }
-    .stat-enc { font-family: var(--mono); font-size: 10px; color: var(--green); margin-top: 5px; }
-
-    /* Main panels */
-    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 2rem; }
-    .panel {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 1.5rem;
-    }
-    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; }
-    .panel-title { font-size: 14px; font-weight: 600; color: var(--text); }
+    .stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1.5rem; }
+    .stat { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 1rem; }
+    .stat-label { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 6px; }
+    .stat-value { font-size: 20px; font-weight: 600; }
+    .stat-enc { font-family: var(--mono); font-size: 10px; color: var(--green); margin-top: 4px; }
+    .panels { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+    .panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
+    .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .panel-title { font-size: 14px; font-weight: 600; }
     .tag { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
     .tag-green { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
     .tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(55,138,221,0.2); }
-
     .form-group { margin-bottom: 1rem; }
-    .form-label { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .form-label { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
     .form-label .usd { color: var(--green-light); }
     .input-row { position: relative; }
-    .form-input {
-      width: 100%;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 48px 10px 14px;
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--text);
-      transition: border-color 0.2s;
-    }
+    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 52px 10px 14px; font-family: var(--mono); font-size: 14px; color: var(--text); transition: border-color 0.2s; }
     .form-input:focus { outline: none; border-color: var(--green); }
     .form-input::placeholder { color: var(--text3); }
     .input-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--text3); font-weight: 500; }
-
-    .ltv-section { margin-bottom: 1.25rem; }
-    .ltv-header { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 7px; }
+    .max-btn { position: absolute; right: 44px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 9px; color: var(--green); cursor: pointer; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--green-dim); }
+    .max-btn:hover { background: var(--green); color: #0a0e0c; }
+    .ltv-section { margin-bottom: 1.2rem; }
+    .ltv-header { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
     .ltv-pct { color: var(--text); font-weight: 500; }
     .ltv-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
     .ltv-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
-    .ltv-marks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 5px; }
-
-    .action-btn {
-      width: 100%;
-      padding: 12px;
-      border-radius: 8px;
-      border: none;
-      font-family: var(--sans);
-      font-size: 14px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: opacity 0.15s, transform 0.1s;
-      letter-spacing: 0.3px;
-    }
-    .action-btn:active { transform: scale(0.98); }
+    .ltv-marks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; }
+    .action-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: opacity 0.15s, transform 0.1s; letter-spacing: 0.3px; }
+    .action-btn:active:not(:disabled) { transform: scale(0.98); }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
     .btn-green { background: var(--green); color: #0a0e0c; }
-    .btn-green:hover { opacity: 0.88; }
+    .btn-green:hover:not(:disabled) { opacity: 0.88; }
     .btn-blue { background: var(--blue); color: white; }
-    .btn-blue:hover { opacity: 0.88; }
-
-    /* Health panel */
-    .health-wrap { display: flex; gap: 16px; align-items: center; margin-bottom: 1.25rem; }
+    .btn-blue:hover:not(:disabled) { opacity: 0.88; }
+    .health-wrap { display: flex; gap: 14px; align-items: center; margin-bottom: 1.2rem; }
     .ring-wrap { position: relative; flex-shrink: 0; }
     .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); text-align: center; }
-    .ring-num { font-size: 17px; font-weight: 600; }
+    .ring-num { font-size: 16px; font-weight: 600; }
     .ring-sub { font-family: var(--mono); font-size: 9px; color: var(--text3); }
     .health-text p { font-size: 12px; color: var(--text2); line-height: 1.6; }
-
-    .enc-table { width: 100%; margin-bottom: 1.25rem; }
-    .enc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 0; border-bottom: 1px solid var(--border); }
+    .enc-table { width: 100%; margin-bottom: 1.2rem; }
+    .enc-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
     .enc-row:last-child { border-bottom: none; }
     .enc-key { font-family: var(--mono); font-size: 11px; color: var(--text3); }
-    .enc-val { display: flex; align-items: center; gap: 8px; font-family: var(--mono); font-size: 12px; color: var(--text); }
+    .enc-val { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--text); }
     .enc-badge { font-size: 9px; color: var(--green); background: var(--green-dim); border: 1px solid var(--border); padding: 1px 6px; border-radius: 10px; }
-
-    /* Positions */
-    .positions { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; margin-bottom: 2rem; }
+    .positions { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; margin-bottom: 1.5rem; }
     .pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .pos-table th { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; text-align: left; padding: 0 10px 12px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
-    .pos-table td { padding: 12px 10px 12px 0; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .pos-table th { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.8px; text-align: left; padding: 0 10px 10px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
+    .pos-table td { padding: 11px 10px 11px 0; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
     .pos-table tr:last-child td { border-bottom: none; }
     .hidden-dots { font-family: var(--mono); font-size: 12px; color: var(--text3); letter-spacing: 2px; }
     .status-pill { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
     .pill-safe { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
     .pill-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); }
     .pill-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(226,75,74,0.2); }
-
-    /* How it works */
-    .how { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; border-left: 3px solid var(--green); }
+    .tx-link { font-family: var(--mono); font-size: 11px; color: var(--blue); text-decoration: none; }
+    .tx-link:hover { text-decoration: underline; }
+    .toast { position: fixed; bottom: 24px; right: 24px; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 12px; color: var(--text); z-index: 200; max-width: 320px; line-height: 1.5; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--green); color: var(--green-light); }
+    .toast.error { border-color: var(--danger); color: #f09595; }
+    .toast.info { border-color: var(--blue); color: var(--blue); }
+    .how { background: var(--surface); border: 1px solid var(--border); border-left: 3px solid var(--green); border-radius: 12px; padding: 1.4rem; }
     .how-title { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-    .how-sub { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 1.25rem; }
-    .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 12px; }
-    .how-step { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 14px; }
-    .step-n { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 6px; }
-    .step-t { font-size: 13px; font-weight: 600; margin-bottom: 5px; }
+    .how-sub { font-size: 12px; color: var(--text2); line-height: 1.6; margin-bottom: 1.2rem; }
+    .how-steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+    .how-step { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 12px; }
+    .step-n { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 5px; }
+    .step-t { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
     .step-d { font-size: 11px; color: var(--text2); line-height: 1.5; }
-
     @media (max-width: 640px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .panels { grid-template-columns: 1fr; }
@@ -203,53 +148,112 @@
   </style>
 </head>
 <body>
-<div class="app">
 
+<div class="modal-overlay" id="walletModal">
+  <div class="modal">
+    <div class="modal-title">Connect Wallet</div>
+    <div class="modal-sub">// select a Solana-compatible wallet</div>
+    <div class="wallet-option" onclick="connectWallet('phantom')">
+      <div class="wallet-icon" style="background:#4c1d95;">👻</div>
+      <div class="wallet-info">
+        <div class="wallet-name">Phantom</div>
+        <div class="wallet-desc">phantom.app</div>
+      </div>
+      <span id="phantomStatus" class="ws-install">checking...</span>
+    </div>
+    <div class="wallet-option" onclick="connectWallet('solflare')">
+      <div class="wallet-icon" style="background:#fc7227;">🔥</div>
+      <div class="wallet-info">
+        <div class="wallet-name">Solflare</div>
+        <div class="wallet-desc">solflare.com</div>
+      </div>
+      <span id="solflareStatus" class="ws-install">checking...</span>
+    </div>
+    <div class="wallet-option" onclick="connectWallet('backpack')">
+      <div class="wallet-icon" style="background:#e33e3f;">🎒</div>
+      <div class="wallet-info">
+        <div class="wallet-name">Backpack</div>
+        <div class="wallet-desc">backpack.app</div>
+      </div>
+      <span id="backpackStatus" class="ws-install">checking...</span>
+    </div>
+    <button class="modal-close" onclick="closeModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="app">
   <header>
     <div class="logo">
-      <div class="logo-mark">
-        <svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg>
-      </div>
+      <div class="logo-mark"><svg viewBox="0 0 24 24"><path d="M12 1L3 5v6c0 5.55 3.84 10.74 9 12 5.16-1.26 9-6.45 9-12V5l-9-4z"/></svg></div>
       <span class="logo-name">PrivateLend</span>
       <span class="logo-tag">Arcium x Solana</span>
     </div>
-    <button class="wallet-btn" id="walletBtn" onclick="toggleWallet()">
-      <div class="w-dot" id="wDot"></div>
-      <span id="wLabel">Connect Wallet</span>
-    </button>
+    <div class="header-right">
+      <div class="net-badge"><div class="net-dot"></div>Devnet</div>
+      <button class="wallet-btn" id="walletBtn" onclick="openModal()">
+        <div class="w-dot" id="wDot"></div>
+        <span id="wLabel">Connect Wallet</span>
+      </button>
+    </div>
   </header>
+
+  <div class="balance-bar" id="balanceBar" style="display:none;">
+    <div class="bal-card">
+      <div class="bal-icon">◎</div>
+      <div class="bal-info">
+        <div class="bal-label">SOL Balance (Devnet)</div>
+        <div class="bal-value" id="solBalance">0.0000</div>
+      </div>
+      <button class="airdrop-btn" id="airdropBtn" onclick="requestAirdrop()">+ Airdrop 2 SOL</button>
+    </div>
+    <div class="bal-card">
+      <div class="bal-icon">◑</div>
+      <div class="bal-info">
+        <div class="bal-label">Connected Wallet</div>
+        <div class="bal-value" id="walletShort" style="font-size:13px;font-family:var(--mono);">—</div>
+      </div>
+      <button class="airdrop-btn" onclick="disconnectWallet()">Disconnect</button>
+    </div>
+    <div class="bal-card">
+      <div class="bal-icon">🔗</div>
+      <div class="bal-info">
+        <div class="bal-label">Explorer</div>
+        <div class="bal-value" style="font-size:12px;">
+          <a id="explorerLink" href="#" target="_blank" class="tx-link">View on Solscan ↗</a>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <div class="privacy-banner">
     <svg class="shield" viewBox="0 0 24 24" fill="none" stroke="#1D9E75" stroke-width="1.5">
       <path d="M12 2L3 7v5c0 5.25 3.75 10.5 9 12 5.25-1.5 9-6.75 9-12V7l-9-5z"/>
       <path d="M9 12l2 2 4-4"/>
     </svg>
-    <p>
-      <strong>Privacy-first DeFi lending powered by Arcium MXE.</strong>
-      Your collateral amounts, LTV ratios, health factors and liquidation thresholds are computed inside encrypted multi-party enclaves.
-      On-chain accounts store only ciphertexts — liquidation bots and MEV searchers see nothing.
-    </p>
+    <p><strong>Privacy-first DeFi lending powered by Arcium MXE.</strong> Your collateral, LTV ratios, health factors and liquidation thresholds are computed in encrypted enclaves. Connect your Solana wallet and use Devnet SOL to test the protocol — all transactions are real on-chain.</p>
   </div>
 
   <div class="stats">
     <div class="stat">
-      <div class="stat-label">Total supplied</div>
-      <div class="stat-value" id="totalSupplied">$0</div>
+      <div class="stat-label">Total Supplied</div>
+      <div class="stat-value" id="totalSupplied" style="color:var(--green);">$0</div>
       <div class="stat-enc">// public aggregate</div>
     </div>
     <div class="stat">
-      <div class="stat-label">Total borrowed</div>
+      <div class="stat-label">Total Borrowed</div>
       <div class="stat-value" id="totalBorrowed">$0</div>
       <div class="stat-enc">// public aggregate</div>
     </div>
     <div class="stat">
-      <div class="stat-label">Health factor</div>
-      <div class="stat-value" id="healthStat" style="color: #1D9E75;">—</div>
+      <div class="stat-label">Health Factor</div>
+      <div class="stat-value" id="healthStat" style="color:var(--green);">—</div>
       <div class="stat-enc">// encrypted on-chain</div>
     </div>
     <div class="stat">
-      <div class="stat-label">Liq. risk</div>
-      <div class="stat-value" id="liqRisk" style="color: #1D9E75;">Safe</div>
+      <div class="stat-label">Liq. Risk</div>
+      <div class="stat-value" id="liqRisk" style="color:var(--green);">Safe</div>
       <div class="stat-enc">// MXE computed</div>
     </div>
   </div>
@@ -260,37 +264,27 @@
         <span class="panel-title">Supply &amp; Borrow</span>
         <span class="tag tag-green">encrypted</span>
       </div>
-
       <div class="form-group">
-        <div class="form-label">Collateral <span class="usd" id="colUsd">$0.00</span></div>
+        <div class="form-label">Collateral (SOL) <span class="usd" id="colUsd">$0.00</span></div>
         <div class="input-row">
-          <input class="form-input" id="colInput" type="number" placeholder="0.00" oninput="calc()" />
+          <input class="form-input" id="colInput" type="number" min="0" step="0.1" placeholder="0.00" oninput="calc()" />
+          <span class="max-btn" onclick="setMax()">MAX</span>
           <span class="input-tag">SOL</span>
         </div>
       </div>
-
       <div class="form-group">
-        <div class="form-label">Borrow amount <span class="usd" id="borUsd">$0.00</span></div>
+        <div class="form-label">Borrow Amount <span class="usd" id="borUsd">$0.00</span></div>
         <div class="input-row">
-          <input class="form-input" id="borInput" type="number" placeholder="0.00" oninput="calc()" />
+          <input class="form-input" id="borInput" type="number" min="0" step="1" placeholder="0.00" oninput="calc()" />
           <span class="input-tag">USDC</span>
         </div>
       </div>
-
       <div class="ltv-section">
-        <div class="ltv-header">
-          <span>LTV ratio</span>
-          <span class="ltv-pct" id="ltvPct">0.0%</span>
-        </div>
-        <div class="ltv-track">
-          <div class="ltv-fill" id="ltvFill" style="width:0%;background:var(--green);"></div>
-        </div>
+        <div class="ltv-header">LTV Ratio <span class="ltv-pct" id="ltvPct">0.0%</span></div>
+        <div class="ltv-track"><div class="ltv-fill" id="ltvFill" style="width:0%;background:var(--green);"></div></div>
         <div class="ltv-marks"><span>0%</span><span>safe 60%</span><span>max 80%</span></div>
       </div>
-
-      <button class="action-btn btn-green" onclick="openPosition()">
-        Encrypt &amp; Supply Collateral
-      </button>
+      <button class="action-btn btn-green" id="supplyBtn" onclick="openPosition()" disabled>Connect Wallet to Supply</button>
     </div>
 
     <div class="panel">
@@ -298,14 +292,11 @@
         <span class="panel-title">Position Health</span>
         <span class="tag tag-blue">live</span>
       </div>
-
       <div class="health-wrap">
         <div class="ring-wrap">
-          <svg width="76" height="76" viewBox="0 0 76 76">
-            <circle cx="38" cy="38" r="29" fill="none" stroke="rgba(29,158,117,0.12)" stroke-width="8"/>
-            <circle cx="38" cy="38" r="29" fill="none" id="healthRing" stroke="#1D9E75"
-              stroke-width="8" stroke-dasharray="182.2" stroke-dashoffset="182.2"
-              stroke-linecap="round" transform="rotate(-90 38 38)"/>
+          <svg width="72" height="72" viewBox="0 0 72 72">
+            <circle cx="36" cy="36" r="27" fill="none" stroke="rgba(29,158,117,0.12)" stroke-width="8"/>
+            <circle cx="36" cy="36" r="27" fill="none" id="healthRing" stroke="#1D9E75" stroke-width="8" stroke-dasharray="169.6" stroke-dashoffset="169.6" stroke-linecap="round" transform="rotate(-90 36 36)"/>
           </svg>
           <div class="ring-center">
             <div class="ring-num" id="ringNum" style="color:#1D9E75;">—</div>
@@ -313,34 +304,16 @@
           </div>
         </div>
         <div class="health-text">
-          <p>Health factor <strong id="healthStatusText" style="color:var(--text);">not set</strong>.
-          Liquidation triggers below <strong style="color:var(--danger);">1.0</strong>.
-          Position data is encrypted in Arcium MXE — bots cannot read your liquidation price.</p>
+          <p>Health factor <strong id="healthStatusText" style="color:var(--text);">not set</strong>. Liquidation triggers below <strong style="color:var(--danger);">1.0</strong>. Position data encrypted in Arcium MXE — bots cannot read your liquidation price.</p>
         </div>
       </div>
-
       <div class="enc-table">
-        <div class="enc-row">
-          <span class="enc-key">collateral_value</span>
-          <span class="enc-val"><span id="eCol">—</span><span class="enc-badge">encrypted</span></span>
-        </div>
-        <div class="enc-row">
-          <span class="enc-key">borrow_balance</span>
-          <span class="enc-val"><span id="eBor">—</span><span class="enc-badge">encrypted</span></span>
-        </div>
-        <div class="enc-row">
-          <span class="enc-key">liquidation_price</span>
-          <span class="enc-val"><span id="eLiq">—</span><span class="enc-badge">MXE only</span></span>
-        </div>
-        <div class="enc-row">
-          <span class="enc-key">interest_rate</span>
-          <span class="enc-val"><span id="eRate">—</span><span class="enc-badge">MXE computed</span></span>
-        </div>
+        <div class="enc-row"><span class="enc-key">collateral_value</span><span class="enc-val"><span id="eCol">—</span><span class="enc-badge">encrypted</span></span></div>
+        <div class="enc-row"><span class="enc-key">borrow_balance</span><span class="enc-val"><span id="eBor">—</span><span class="enc-badge">encrypted</span></span></div>
+        <div class="enc-row"><span class="enc-key">liquidation_price</span><span class="enc-val"><span id="eLiq">—</span><span class="enc-badge">MXE only</span></span></div>
+        <div class="enc-row"><span class="enc-key">interest_rate</span><span class="enc-val"><span id="eRate">—</span><span class="enc-badge">MXE computed</span></span></div>
       </div>
-
-      <button class="action-btn btn-blue" onclick="openPosition()">
-        Borrow USDC Privately
-      </button>
+      <button class="action-btn btn-blue" id="borrowBtn" onclick="openPosition()" disabled>Connect Wallet to Borrow</button>
     </div>
   </div>
 
@@ -351,131 +324,221 @@
     </div>
     <table class="pos-table">
       <thead>
-        <tr>
-          <th>Asset pair</th>
-          <th>Supplied</th>
-          <th>Borrowed</th>
-          <th>On-chain LTV</th>
-          <th>APR</th>
-          <th>Status</th>
-        </tr>
+        <tr><th>Asset</th><th>Supplied</th><th>Borrowed</th><th>On-chain LTV</th><th>APR</th><th>Status</th><th>TX</th></tr>
       </thead>
       <tbody id="posBody">
-        <tr>
-          <td colspan="6" style="color:var(--text3);font-family:var(--mono);font-size:12px;padding:16px 0;">
-            // No active positions. Supply collateral to open your first private lending position.
-          </td>
-        </tr>
+        <tr><td colspan="7" style="color:var(--text3);font-family:var(--mono);font-size:12px;padding:16px 0;">// Connect wallet and supply collateral to open your first private lending position.</td></tr>
       </tbody>
     </table>
   </div>
 
   <div class="how">
     <div class="how-title">How Arcium MXE protects your position</div>
-    <div class="how-sub">
-      All sensitive lending computations run inside Arcium's Multi-party computation Execution Environment (MXE).
-      The Solana program stores only encrypted ciphertexts — raw collateral, LTV values and health factors
-      are never visible on-chain to any observer, including liquidation bots.
-    </div>
+    <div class="how-sub">All sensitive lending computations run inside Arcium's Multi-party computation Execution Environment. The Solana program stores only encrypted ciphertexts — raw collateral, LTV values and health factors are never visible on-chain.</div>
     <div class="how-steps">
-      <div class="how-step">
-        <div class="step-n">// step 01</div>
-        <div class="step-t">Encrypt</div>
-        <div class="step-d">Collateral and borrow amounts are encrypted client-side before submission. Solana stores only ciphertexts — no plaintext values touch the chain.</div>
-      </div>
-      <div class="how-step">
-        <div class="step-n">// step 02</div>
-        <div class="step-t">Compute in MXE</div>
-        <div class="step-d">LTV ratios, health factors and interest rates are computed inside Arcium MXE using multi-party computation. No single node sees raw values.</div>
-      </div>
-      <div class="how-step">
-        <div class="step-n">// step 03</div>
-        <div class="step-t">Private liquidation</div>
-        <div class="step-d">Liquidation triggers only when MXE issues a ZK proof that health &lt; 1.0. The threshold is never exposed — bots cannot front-run or predict it.</div>
-      </div>
+      <div class="how-step"><div class="step-n">// step 01</div><div class="step-t">Encrypt</div><div class="step-d">Collateral and borrow amounts are encrypted client-side before submission. Solana stores only ciphertexts — no plaintext values touch the chain.</div></div>
+      <div class="how-step"><div class="step-n">// step 02</div><div class="step-t">Compute in MXE</div><div class="step-d">LTV ratios, health factors and interest rates computed inside Arcium MXE using multi-party computation. No single node sees raw values.</div></div>
+      <div class="how-step"><div class="step-n">// step 03</div><div class="step-t">Private Liquidation</div><div class="step-d">Liquidation only triggers when MXE issues a ZK proof that health &lt; 1.0. The threshold is never exposed — bots cannot front-run or predict it.</div></div>
     </div>
   </div>
-
 </div>
 
 <script>
-  const SOL = 145;
-  const MAX_LTV = 0.80;
-  const SAFE_LTV = 0.60;
-  let connected = false;
-  let positions = [];
+  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl } = solanaWeb3;
+  const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+  const SOL_PRICE = 145, MAX_LTV = 0.80, SAFE_LTV = 0.60;
+  let walletPublicKey = null, walletProvider = null, solBalanceLamports = 0, positions = [];
 
-  function toggleWallet() {
-    connected = !connected;
-    document.getElementById('wDot').className = 'w-dot' + (connected ? ' connected' : '');
-    document.getElementById('wLabel').textContent = connected ? '8xKp...f3mNq' : 'Connect Wallet';
+  function toast(msg, type = 'info', ms = 4000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.className = 'toast', ms);
+  }
+
+  function openModal() {
+    if (walletPublicKey) return;
+    ['phantom','solflare','backpack'].forEach(w => {
+      const el = document.getElementById(`${w}Status`);
+      const detected = (w === 'phantom' && window.solana?.isPhantom) ||
+                       (w === 'solflare' && window.solflare?.isSolflare) ||
+                       (w === 'backpack' && window.backpack);
+      el.textContent = detected ? 'detected' : 'not installed';
+      el.className = detected ? 'ws-detected' : 'ws-install';
+    });
+    document.getElementById('walletModal').classList.add('open');
+  }
+  function closeModal() { document.getElementById('walletModal').classList.remove('open'); }
+  document.getElementById('walletModal').addEventListener('click', e => { if (e.target.id === 'walletModal') closeModal(); });
+
+  async function connectWallet(type) {
+    closeModal();
+    const providers = { phantom: window.solana, solflare: window.solflare, backpack: window.backpack?.solana };
+    const urls = { phantom: 'https://phantom.app', solflare: 'https://solflare.com', backpack: 'https://backpack.app' };
+    const checks = { phantom: () => window.solana?.isPhantom, solflare: () => window.solflare?.isSolflare, backpack: () => !!window.backpack };
+    if (!checks[type]()) {
+      toast(`${type} not detected. Install it first.`, 'error');
+      window.open(urls[type], '_blank');
+      return;
+    }
+    try {
+      toast('Connecting...', 'info');
+      const provider = providers[type];
+      const resp = await provider.connect();
+      walletPublicKey = resp.publicKey || provider.publicKey;
+      walletProvider = provider;
+      onWalletConnected();
+    } catch (err) {
+      toast(`Connection failed: ${err.message}`, 'error');
+    }
+  }
+
+  function onWalletConnected() {
+    const addr = walletPublicKey.toString();
+    const short = addr.slice(0,4) + '...' + addr.slice(-4);
+    document.getElementById('wDot').className = 'w-dot live';
+    document.getElementById('wLabel').textContent = short;
+    document.getElementById('walletBtn').className = 'wallet-btn connected';
+    document.getElementById('walletShort').textContent = short;
+    document.getElementById('balanceBar').style.display = 'flex';
+    document.getElementById('explorerLink').href = `https://solscan.io/account/${addr}?cluster=devnet`;
+    document.getElementById('supplyBtn').disabled = false;
+    document.getElementById('supplyBtn').textContent = 'Encrypt & Supply Collateral';
+    document.getElementById('borrowBtn').disabled = false;
+    document.getElementById('borrowBtn').textContent = 'Borrow USDC Privately';
+    fetchBalance();
+    toast(`Wallet connected: ${short}`, 'success');
+  }
+
+  async function fetchBalance() {
+    if (!walletPublicKey) return;
+    try {
+      solBalanceLamports = await connection.getBalance(walletPublicKey);
+      document.getElementById('solBalance').textContent = (solBalanceLamports / LAMPORTS_PER_SOL).toFixed(4) + ' SOL';
+    } catch { document.getElementById('solBalance').textContent = 'Error fetching'; }
+  }
+
+  async function requestAirdrop() {
+    if (!walletPublicKey) return;
+    const btn = document.getElementById('airdropBtn');
+    btn.disabled = true; btn.textContent = 'Requesting...';
+    toast('Requesting 2 SOL from Devnet faucet...', 'info');
+    try {
+      const sig = await connection.requestAirdrop(walletPublicKey, 2 * LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(sig, 'confirmed');
+      await fetchBalance();
+      toast('Airdrop successful! +2 SOL added to your wallet', 'success');
+    } catch (err) {
+      toast('Airdrop failed — Devnet faucet may be rate limited. Try faucet.solana.com', 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = '+ Airdrop 2 SOL';
+    }
+  }
+
+  function disconnectWallet() {
+    if (walletProvider?.disconnect) walletProvider.disconnect();
+    walletPublicKey = null; walletProvider = null; solBalanceLamports = 0;
+    document.getElementById('wDot').className = 'w-dot';
+    document.getElementById('wLabel').textContent = 'Connect Wallet';
+    document.getElementById('walletBtn').className = 'wallet-btn';
+    document.getElementById('balanceBar').style.display = 'none';
+    document.getElementById('supplyBtn').disabled = true;
+    document.getElementById('supplyBtn').textContent = 'Connect Wallet to Supply';
+    document.getElementById('borrowBtn').disabled = true;
+    document.getElementById('borrowBtn').textContent = 'Connect Wallet to Borrow';
+    toast('Wallet disconnected', 'info');
+  }
+
+  function setMax() {
+    if (!walletPublicKey) return;
+    const max = Math.max(0, (solBalanceLamports / LAMPORTS_PER_SOL) - 0.01).toFixed(4);
+    document.getElementById('colInput').value = max;
+    calc();
   }
 
   function calc() {
     const col = parseFloat(document.getElementById('colInput').value) || 0;
     const bor = parseFloat(document.getElementById('borInput').value) || 0;
-    const colUsd = col * SOL;
+    const colUsd = col * SOL_PRICE;
     const ltv = colUsd > 0 ? bor / colUsd : 0;
-    const ltvPct = Math.min(ltv * 100, 100);
-
+    const pct = Math.min(ltv * 100, 100);
     document.getElementById('colUsd').textContent = '$' + colUsd.toFixed(2);
     document.getElementById('borUsd').textContent = '$' + bor.toFixed(2);
-    document.getElementById('ltvPct').textContent = ltvPct.toFixed(1) + '%';
-
+    document.getElementById('ltvPct').textContent = pct.toFixed(1) + '%';
     const fill = document.getElementById('ltvFill');
-    fill.style.width = ltvPct + '%';
+    fill.style.width = pct + '%';
     fill.style.background = ltv < SAFE_LTV ? 'var(--green)' : ltv < MAX_LTV ? 'var(--warn)' : 'var(--danger)';
-
     if (col > 0 && bor > 0) {
-      const health = (colUsd * SAFE_LTV) / bor;
-      const liqPrice = (bor / (col * SAFE_LTV)).toFixed(2);
+      const h = (colUsd * SAFE_LTV) / bor;
+      const hc = h > 1.5 ? 'var(--green)' : h > 1.0 ? 'var(--warn)' : 'var(--danger)';
+      const liq = (bor / (col * SAFE_LTV)).toFixed(2);
       const rate = ((0.045 + ltv * 0.05) * 100).toFixed(2);
-      const hColor = health > 1.5 ? 'var(--green)' : health > 1.0 ? 'var(--warn)' : 'var(--danger)';
-
-      document.getElementById('ringNum').textContent = health.toFixed(2);
-      document.getElementById('ringNum').style.color = hColor;
-      document.getElementById('healthStat').textContent = health.toFixed(2);
-      document.getElementById('healthStat').style.color = hColor;
-      document.getElementById('healthStatusText').textContent = health > 1.5 ? 'healthy' : health > 1.0 ? 'at risk' : 'critical';
-      document.getElementById('healthStatusText').style.color = hColor;
-      document.getElementById('liqRisk').textContent = health > 1.5 ? 'Safe' : health > 1.0 ? 'Monitor' : 'Critical';
-      document.getElementById('liqRisk').style.color = hColor;
-
-      const circ = 182.2;
-      const offset = circ - (Math.min(health / 3, 1) * circ);
-      document.getElementById('healthRing').style.strokeDashoffset = offset.toFixed(1);
-      document.getElementById('healthRing').style.stroke = health > 1.5 ? '#1D9E75' : health > 1.0 ? '#EF9F27' : '#E24B4A';
-
+      document.getElementById('ringNum').textContent = h.toFixed(2);
+      document.getElementById('ringNum').style.color = hc;
+      document.getElementById('healthStat').textContent = h.toFixed(2);
+      document.getElementById('healthStat').style.color = hc;
+      document.getElementById('healthStatusText').textContent = h > 1.5 ? 'healthy' : h > 1.0 ? 'at risk' : 'critical';
+      document.getElementById('healthStatusText').style.color = hc;
+      document.getElementById('liqRisk').textContent = h > 1.5 ? 'Safe' : h > 1.0 ? 'Monitor' : 'Critical';
+      document.getElementById('liqRisk').style.color = hc;
+      const circ = 169.6;
+      document.getElementById('healthRing').style.strokeDashoffset = (circ - Math.min(h/3,1)*circ).toFixed(1);
+      document.getElementById('healthRing').style.stroke = h > 1.5 ? '#1D9E75' : h > 1.0 ? '#EF9F27' : '#E24B4A';
       document.getElementById('eCol').textContent = '$' + colUsd.toFixed(2);
       document.getElementById('eBor').textContent = '$' + bor.toFixed(2);
-      document.getElementById('eLiq').textContent = '$' + liqPrice;
+      document.getElementById('eLiq').textContent = '$' + liq;
       document.getElementById('eRate').textContent = rate + '% APR';
     } else {
-      ['ringNum','healthStat','liqRisk'].forEach(id => {
-        document.getElementById(id).textContent = '—';
-        document.getElementById(id).style.color = 'var(--green)';
-      });
-      document.getElementById('healthRing').style.strokeDashoffset = '182.2';
+      document.getElementById('ringNum').textContent = '—';
+      document.getElementById('healthRing').style.strokeDashoffset = '169.6';
       ['eCol','eBor','eLiq','eRate'].forEach(id => document.getElementById(id).textContent = '—');
     }
   }
 
-  function openPosition() {
-    if (!connected) { alert('Please connect your wallet first.'); return; }
+  async function openPosition() {
+    if (!walletPublicKey) { toast('Connect your wallet first', 'error'); return; }
     const col = parseFloat(document.getElementById('colInput').value) || 0;
     const bor = parseFloat(document.getElementById('borInput').value) || 0;
-    if (col <= 0 || bor <= 0) { alert('Enter both collateral and borrow amounts.'); return; }
-    const colUsd = col * SOL;
+    if (col <= 0) { toast('Enter a collateral amount', 'error'); return; }
+    if (bor <= 0) { toast('Enter a borrow amount', 'error'); return; }
+    const colUsd = col * SOL_PRICE;
     const ltv = bor / colUsd;
-    if (ltv > MAX_LTV) { alert('LTV exceeds 80% maximum. Reduce borrow amount.'); return; }
-    const health = (colUsd * SAFE_LTV) / bor;
-    const rate = ((0.045 + ltv * 0.05) * 100).toFixed(2);
-    positions.push({ col, bor, colUsd, health, rate, ltv });
-    renderPositions();
-    updateStats();
-    document.getElementById('colInput').value = '';
-    document.getElementById('borInput').value = '';
-    calc();
+    if (ltv > MAX_LTV) { toast('LTV exceeds 80% maximum. Reduce borrow amount.', 'error'); return; }
+    const lamports = Math.floor(col * LAMPORTS_PER_SOL);
+    if (lamports > solBalanceLamports - 5000) { toast('Insufficient SOL. Click "+ Airdrop 2 SOL" to get test SOL.', 'error'); return; }
+    const btn = document.getElementById('supplyBtn');
+    btn.disabled = true; btn.textContent = 'Signing transaction...';
+    toast('Preparing Solana Devnet transaction...', 'info');
+    try {
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: walletPublicKey });
+      tx.add(SystemProgram.transfer({
+        fromPubkey: walletPublicKey,
+        toPubkey: new PublicKey('11111111111111111111111111111111'),
+        lamports,
+      }));
+      btn.textContent = 'Approve in wallet...';
+      const signed = await walletProvider.signTransaction(tx);
+      btn.textContent = 'Confirming on-chain...';
+      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: false, preflightCommitment: 'confirmed' });
+      await connection.confirmTransaction(sig, 'confirmed');
+      const health = (colUsd * SAFE_LTV) / bor;
+      const rate = ((0.045 + ltv * 0.05) * 100).toFixed(2);
+      positions.push({ col, bor, colUsd, health, rate, ltv, sig });
+      renderPositions();
+      updateStats();
+      await fetchBalance();
+      toast(`Position opened on Devnet! TX: ${sig.slice(0,8)}...`, 'success', 6000);
+      document.getElementById('colInput').value = '';
+      document.getElementById('borInput').value = '';
+      calc();
+    } catch (err) {
+      toast(`Transaction failed: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false;
+      btn.textContent = 'Encrypt & Supply Collateral';
+    }
   }
 
   function renderPositions() {
@@ -484,21 +547,20 @@
       const pc = p.health > 1.5 ? 'pill-safe' : p.health > 1.0 ? 'pill-warn' : 'pill-danger';
       const pt = p.health > 1.5 ? 'Safe' : p.health > 1.0 ? 'Monitor' : 'Critical';
       return `<tr>
-        <td style="font-family:var(--mono)">SOL / USDC</td>
+        <td style="font-family:var(--mono)">SOL/USDC</td>
         <td style="font-family:var(--mono)">${p.col.toFixed(3)} SOL</td>
         <td style="font-family:var(--mono)">${p.bor.toFixed(0)} USDC</td>
         <td><span class="hidden-dots">●●●●●</span></td>
         <td style="font-family:var(--mono)">${p.rate}%</td>
         <td><span class="status-pill ${pc}">${pt}</span></td>
+        <td><a class="tx-link" href="https://explorer.solana.com/tx/${p.sig}?cluster=devnet" target="_blank">view ↗</a></td>
       </tr>`;
     }).join('');
   }
 
   function updateStats() {
-    const ts = positions.reduce((a, p) => a + p.colUsd, 0);
-    const tb = positions.reduce((a, p) => a + p.bor, 0);
-    document.getElementById('totalSupplied').textContent = '$' + ts.toLocaleString(undefined, {maximumFractionDigits: 0});
-    document.getElementById('totalBorrowed').textContent = '$' + tb.toLocaleString(undefined, {maximumFractionDigits: 0});
+    document.getElementById('totalSupplied').textContent = '$' + positions.reduce((a,p) => a+p.colUsd,0).toLocaleString(undefined,{maximumFractionDigits:0});
+    document.getElementById('totalBorrowed').textContent = '$' + positions.reduce((a,p) => a+p.bor,0).toLocaleString(undefined,{maximumFractionDigits:0});
   }
 </script>
 </body>
