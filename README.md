@@ -3,8 +3,7 @@
 > Onchain lending exposes collateral, borrows, and health factors, inviting predatory liquidations. PrivateLend solves this with Arcium MXE — all sensitive values are computed in encrypted enclaves, invisible to bots.
 
 ## Live Demo
-[https://privatelend-solana.vercel.app](https://privatelend-solana.vercel.app)
-
+https://privatelend-kappa.vercel.app/
 ## The Problem
 
 Traditional DeFi lending protocols store all position data publicly on-chain:
