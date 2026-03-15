@@ -1,0 +1,25 @@
+{
+  "name": "privatelend-solana",
+  "version": "1.0.0",
+  "description": "Privacy-first DeFi lending on Solana powered by Arcium MXE",
+  "scripts": {
+    "test": "ts-mocha -p ./tsconfig.json -t 1000000 scripts/test.ts",
+    "build": "anchor build",
+    "deploy": "anchor deploy"
+  },
+  "dependencies": {
+    "@coral-xyz/anchor": "^0.29.0",
+    "@solana/web3.js": "^1.87.6",
+    "@solana/spl-token": "^0.3.11",
+    "bn.js": "^5.2.1"
+  },
+  "devDependencies": {
+    "@types/bn.js": "^5.1.5",
+    "@types/chai": "^4.3.11",
+    "@types/mocha": "^10.0.6",
+    "chai": "^4.3.10",
+    "mocha": "^10.2.0",
+    "ts-mocha": "^10.0.0",
+    "typescript": "^5.3.3"
+  }
+}
