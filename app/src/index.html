@@ -349,6 +349,7 @@
   const SOL_PRICE = 145, MAX_LTV = 0.80, SAFE_LTV = 0.60;
   let walletPublicKey = null, walletProvider = null, solBalanceLamports = 0, positions = [];
 
+  // ── Toast ──
   function toast(msg, type = 'info', ms = 4000) {
     const t = document.getElementById('toast');
     t.textContent = msg;
@@ -357,44 +358,120 @@
     t._t = setTimeout(() => t.className = 'toast', ms);
   }
 
-  function openModal() {
-    if (walletPublicKey) return;
-    ['phantom','solflare','backpack'].forEach(w => {
-      const el = document.getElementById(`${w}Status`);
-      const detected = (w === 'phantom' && window.solana?.isPhantom) ||
-                       (w === 'solflare' && window.solflare?.isSolflare) ||
-                       (w === 'backpack' && window.backpack);
-      el.textContent = detected ? 'detected' : 'not installed';
-      el.className = detected ? 'ws-detected' : 'ws-install';
-    });
-    document.getElementById('walletModal').classList.add('open');
-  }
-  function closeModal() { document.getElementById('walletModal').classList.remove('open'); }
-  document.getElementById('walletModal').addEventListener('click', e => { if (e.target.id === 'walletModal') closeModal(); });
+  // ── On page load: check if wallet already connected silently (no toast) ──
+  window.addEventListener('load', async () => {
+    // Small delay to let wallet extensions inject
+    await new Promise(r => setTimeout(r, 500));
 
-  async function connectWallet(type) {
-    closeModal();
-    const providers = { phantom: window.solana, solflare: window.solflare, backpack: window.backpack?.solana };
-    const urls = { phantom: 'https://phantom.app', solflare: 'https://solflare.com', backpack: 'https://backpack.app' };
-    const checks = { phantom: () => window.solana?.isPhantom, solflare: () => window.solflare?.isSolflare, backpack: () => !!window.backpack };
-    if (!checks[type]()) {
-      toast(`${type} not detected. Install it first.`, 'error');
-      window.open(urls[type], '_blank');
+    // Check Phantom eager connect (returns publicKey if already approved)
+    if (window.solana?.isPhantom && window.solana.isConnected && window.solana.publicKey) {
+      walletPublicKey = window.solana.publicKey;
+      walletProvider = window.solana;
+      onWalletConnected(true); // silent = true
       return;
     }
+    // Check Solflare
+    if (window.solflare?.isSolflare && window.solflare.isConnected && window.solflare.publicKey) {
+      walletPublicKey = window.solflare.publicKey;
+      walletProvider = window.solflare;
+      onWalletConnected(true);
+      return;
+    }
+  });
+
+  // ── Modal ──
+  function openModal() {
+    if (walletPublicKey) return;
+    // Detect wallets after slight delay for extension injection
+    setTimeout(() => {
+      ['phantom','solflare','backpack'].forEach(w => {
+        const el = document.getElementById(`${w}Status`);
+        const detected =
+          (w === 'phantom' && window.solana?.isPhantom) ||
+          (w === 'solflare' && window.solflare?.isSolflare) ||
+          (w === 'backpack' && !!window.backpack);
+        el.textContent = detected ? 'detected' : 'not installed';
+        el.className = detected ? 'ws-detected' : 'ws-install';
+      });
+    }, 100);
+    document.getElementById('walletModal').classList.add('open');
+  }
+
+  function closeModal() {
+    document.getElementById('walletModal').classList.remove('open');
+  }
+
+  document.getElementById('walletModal').addEventListener('click', e => {
+    if (e.target.id === 'walletModal') closeModal();
+  });
+
+  // ── Connect wallet ──
+  async function connectWallet(type) {
+    closeModal();
+
+    const providerMap = {
+      phantom: () => window.solana,
+      solflare: () => window.solflare,
+      backpack: () => window.backpack?.solana || window.xnft?.solana,
+    };
+    const checkMap = {
+      phantom: () => !!(window.solana?.isPhantom),
+      solflare: () => !!(window.solflare?.isSolflare),
+      backpack: () => !!(window.backpack),
+    };
+    const urlMap = {
+      phantom: 'https://phantom.app',
+      solflare: 'https://solflare.com',
+      backpack: 'https://backpack.app',
+    };
+
+    if (!checkMap[type]()) {
+      toast(`${type.charAt(0).toUpperCase()+type.slice(1)} not detected. Opening install page...`, 'error');
+      setTimeout(() => window.open(urlMap[type], '_blank'), 1000);
+      return;
+    }
+
+    const provider = providerMap[type]();
+    if (!provider) {
+      toast('Wallet provider not found. Please refresh and try again.', 'error');
+      return;
+    }
+
     try {
-      toast('Connecting...', 'info');
-      const provider = providers[type];
-      const resp = await provider.connect();
-      walletPublicKey = resp.publicKey || provider.publicKey;
+      toast('Waiting for wallet approval...', 'info');
+      // Force a fresh connect (not eager)
+      const resp = await provider.connect({ onlyIfTrusted: false });
+      walletPublicKey = resp?.publicKey || provider.publicKey;
+
+      if (!walletPublicKey) throw new Error('No public key returned from wallet');
+
       walletProvider = provider;
-      onWalletConnected();
+      onWalletConnected(false);
+
+      // Listen for disconnect/account change
+      if (provider.on) {
+        provider.on('disconnect', () => disconnectWallet());
+        provider.on('accountChanged', (pk) => {
+          if (!pk) { disconnectWallet(); }
+          else {
+            walletPublicKey = pk;
+            const short = pk.toString().slice(0,4) + '...' + pk.toString().slice(-4);
+            document.getElementById('wLabel').textContent = short;
+            document.getElementById('walletShort').textContent = short;
+            fetchBalance();
+          }
+        });
+      }
     } catch (err) {
-      toast(`Connection failed: ${err.message}`, 'error');
+      if (err.code === 4001) {
+        toast('Connection rejected by user.', 'error');
+      } else {
+        toast(`Connection failed: ${err.message}`, 'error');
+      }
     }
   }
 
-  function onWalletConnected() {
+  function onWalletConnected(silent = false) {
     const addr = walletPublicKey.toString();
     const short = addr.slice(0,4) + '...' + addr.slice(-4);
     document.getElementById('wDot').className = 'w-dot live';
@@ -408,7 +485,7 @@
     document.getElementById('borrowBtn').disabled = false;
     document.getElementById('borrowBtn').textContent = 'Borrow USDC Privately';
     fetchBalance();
-    toast(`Wallet connected: ${short}`, 'success');
+    if (!silent) toast(`Wallet connected: ${short}`, 'success');
   }
 
   async function fetchBalance() {
