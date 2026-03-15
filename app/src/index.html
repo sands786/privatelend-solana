@@ -140,6 +140,46 @@
     .step-n { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 5px; }
     .step-t { font-size: 13px; font-weight: 600; margin-bottom: 4px; }
     .step-d { font-size: 11px; color: var(--text2); line-height: 1.5; }
+
+    .sim-section { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
+    .sim-header { display: flex; justify-content: space-between; align-items: flex-start; margin-bottom: 1.25rem; flex-wrap: wrap; gap: 12px; }
+    .sim-title { font-size: 14px; font-weight: 600; margin-bottom: 4px; }
+    .sim-sub { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+    .sim-controls { display: flex; gap: 8px; align-items: center; flex-wrap: wrap; }
+    .sim-select { font-family: var(--mono); font-size: 11px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); padding: 8px 12px; cursor: pointer; outline: none; }
+    .sim-select:focus { border-color: var(--green); }
+    .sim-run-btn { font-family: var(--mono); font-size: 12px; padding: 9px 18px; background: var(--green); color: #0a0e0c; border: none; border-radius: 8px; cursor: pointer; font-weight: 500; transition: opacity 0.15s; white-space: nowrap; }
+    .sim-run-btn:hover { opacity: 0.85; }
+    .sim-run-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .sim-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 10px; margin-bottom: 1rem; }
+    .sim-panel { background: var(--bg); border: 1px solid var(--border); border-radius: 10px; padding: 12px; }
+    .sim-panel-title { font-family: var(--mono); font-size: 10px; color: var(--green); margin-bottom: 10px; letter-spacing: 0.5px; }
+    .sim-field-row { display: flex; justify-content: space-between; align-items: center; padding: 5px 0; border-bottom: 1px solid rgba(29,158,117,0.06); }
+    .sim-field-row:last-of-type { border-bottom: none; }
+    .sim-field-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+    .sim-field-val { font-family: var(--mono); font-size: 11px; font-weight: 500; max-width: 90px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .sim-field-val.green { color: var(--green-light); }
+    .sim-field-val.blue { color: var(--blue); }
+    .sim-field-val.cipher { color: var(--text3); font-size: 9px; letter-spacing: 0.5px; }
+    .sim-divider { height: 1px; background: var(--border); margin: 8px 0; }
+    .sim-note { font-size: 10px; color: var(--text3); line-height: 1.5; }
+    .sim-terminal { background: #060a08; border: 1px solid var(--border); border-radius: 10px; padding: 14px; margin-bottom: 1rem; font-family: var(--mono); font-size: 11px; min-height: 120px; max-height: 200px; overflow-y: auto; }
+    .sim-terminal-title { color: var(--text3); font-size: 10px; margin-bottom: 10px; letter-spacing: 0.5px; }
+    .sim-log-line { color: var(--green-light); line-height: 1.8; }
+    .sim-log-line.dim { color: var(--text3); }
+    .sim-log-line.warn { color: var(--warn); }
+    .sim-log-line.err { color: var(--danger); }
+    .sim-log-line.cipher { color: #556b61; font-size: 10px; }
+    .sim-result { background: var(--surface2); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 12px; }
+    .sim-result-label { font-family: var(--mono); font-size: 10px; color: var(--text3); margin-bottom: 4px; }
+    .sim-result-value { font-size: 16px; font-weight: 600; }
+    .sim-result-right { display: flex; gap: 20px; flex-wrap: wrap; }
+    .sim-result-item { display: flex; flex-direction: column; gap: 3px; }
+    .sim-result-key { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+    .sim-result-val-sm { font-family: var(--mono); font-size: 12px; font-weight: 500; color: var(--text); }
+    @media (max-width: 800px) { .sim-grid { grid-template-columns: repeat(2, 1fr); } }
+    @media (max-width: 500px) { .sim-grid { grid-template-columns: 1fr; } }
+
     @media (max-width: 640px) {
       .stats { grid-template-columns: repeat(2, 1fr); }
       .panels { grid-template-columns: 1fr; }
@@ -402,6 +442,150 @@
       <div class="how-step"><div class="step-n">// step 03</div><div class="step-t">Private Liquidation</div><div class="step-d">Liquidation only triggers when MXE issues a ZK proof that health &lt; 1.0. The threshold is never exposed — bots cannot front-run or predict it.</div></div>
     </div>
   </div>
+
+  <!-- MXE Live Simulation Section -->
+  <div class="sim-section" style="margin-top:1.5rem;">
+    <div class="sim-header">
+      <div>
+        <div class="sim-title">MXE Computation Simulator</div>
+        <div class="sim-sub">// watch Arcium MXE encrypt, compute and prove your position in real time</div>
+      </div>
+      <div class="sim-controls">
+        <select class="sim-select" id="simPreset" onchange="loadPreset()">
+          <option value="safe">Safe Position — 10 SOL / $800 USDC</option>
+          <option value="moderate">Moderate Risk — 5 SOL / $550 USDC</option>
+          <option value="risky">High Risk — 3 SOL / $320 USDC</option>
+          <option value="critical">Critical — 2 SOL / $220 USDC</option>
+        </select>
+        <button class="sim-run-btn" id="simRunBtn" onclick="runSimulation()">Run Simulation</button>
+      </div>
+    </div>
+
+    <div class="sim-grid">
+      <!-- Input panel -->
+      <div class="sim-panel">
+        <div class="sim-panel-title">// 01. user inputs (plaintext)</div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">collateral_sol</span>
+          <span class="sim-field-val green" id="simCol">10.000</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">sol_price_usd</span>
+          <span class="sim-field-val green" id="simPrice">$145.00</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">collateral_usd</span>
+          <span class="sim-field-val green" id="simColUsd">$1,450.00</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">borrow_usdc</span>
+          <span class="sim-field-val green" id="simBor">$800.00</span>
+        </div>
+        <div class="sim-divider"></div>
+        <div class="sim-note">These values exist only on your device. They are encrypted before touching Solana.</div>
+      </div>
+
+      <!-- Encryption panel -->
+      <div class="sim-panel">
+        <div class="sim-panel-title">// 02. client-side encryption</div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">col_ciphertext</span>
+          <span class="sim-field-val cipher" id="simColCipher">—</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">bor_ciphertext</span>
+          <span class="sim-field-val cipher" id="simBorCipher">—</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">enc_algorithm</span>
+          <span class="sim-field-val blue">AES-256-GCM</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">key_type</span>
+          <span class="sim-field-val blue">ephemeral</span>
+        </div>
+        <div class="sim-divider"></div>
+        <div class="sim-note">Only ciphertexts are sent to Solana. No plaintext amounts ever touch the chain.</div>
+      </div>
+
+      <!-- MXE Computation panel -->
+      <div class="sim-panel">
+        <div class="sim-panel-title">// 03. arcium MXE computation</div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">ltv_ratio</span>
+          <span class="sim-field-val" id="simLtv" style="color:var(--text3);">computing...</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">health_factor</span>
+          <span class="sim-field-val" id="simHealth" style="color:var(--text3);">computing...</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">liq_price_usd</span>
+          <span class="sim-field-val" id="simLiqPrice" style="color:var(--text3);">computing...</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">interest_apr</span>
+          <span class="sim-field-val" id="simRate" style="color:var(--text3);">computing...</span>
+        </div>
+        <div class="sim-divider"></div>
+        <div class="sim-note">All values computed inside encrypted MXE enclave. Never visible on-chain.</div>
+      </div>
+
+      <!-- ZK Proof panel -->
+      <div class="sim-panel">
+        <div class="sim-panel-title">// 04. ZK proof output</div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">computation_id</span>
+          <span class="sim-field-val cipher" id="simCompId">—</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">proof_type</span>
+          <span class="sim-field-val blue" id="simProofType">ltv_within_bounds</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">mxe_signature</span>
+          <span class="sim-field-val cipher" id="simSig">—</span>
+        </div>
+        <div class="sim-field-row">
+          <span class="sim-field-label">verified</span>
+          <span class="sim-field-val" id="simVerified" style="color:var(--text3);">pending...</span>
+        </div>
+        <div class="sim-divider"></div>
+        <div class="sim-note">Only this proof is stored on Solana — not the values it proves.</div>
+      </div>
+    </div>
+
+    <!-- Terminal log -->
+    <div class="sim-terminal" id="simTerminal">
+      <div class="sim-terminal-title">// mxe computation log</div>
+      <div id="simLog">
+        <div class="sim-log-line dim">$ waiting for simulation input...</div>
+      </div>
+    </div>
+
+    <!-- Result bar -->
+    <div class="sim-result" id="simResult" style="display:none;">
+      <div class="sim-result-left">
+        <div class="sim-result-label">Final Position Status</div>
+        <div class="sim-result-value" id="simResultText">—</div>
+      </div>
+      <div class="sim-result-right">
+        <div class="sim-result-item">
+          <span class="sim-result-key">On-chain stores</span>
+          <span class="sim-result-val-sm">2 ciphertexts + 1 proof ID</span>
+        </div>
+        <div class="sim-result-item">
+          <span class="sim-result-key">Bot sees</span>
+          <span class="sim-result-val-sm" style="color:var(--danger);">nothing useful</span>
+        </div>
+        <div class="sim-result-item">
+          <span class="sim-result-key">You see</span>
+          <span class="sim-result-val-sm" style="color:var(--green);">full position details</span>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 
 <script>
@@ -719,6 +903,193 @@
   document.getElementById('creatorModal').addEventListener('click', e => {
     if (e.target.id === 'creatorModal') closeCreator();
   });
+
+  // ── MXE Simulation ──
+  const PRESETS = {
+    safe:     { col: 10, bor: 800 },
+    moderate: { col: 5,  bor: 550 },
+    risky:    { col: 3,  bor: 320 },
+    critical: { col: 2,  bor: 220 },
+  };
+
+  function loadPreset() {
+    const p = PRESETS[document.getElementById('simPreset').value];
+    document.getElementById('simCol').textContent = p.col.toFixed(3);
+    const colUsd = p.col * 145;
+    document.getElementById('simColUsd').textContent = '$' + colUsd.toLocaleString(undefined,{minimumFractionDigits:2,maximumFractionDigits:2});
+    document.getElementById('simBor').textContent = '$' + p.bor.toFixed(2);
+    // Reset computed fields
+    ['simLtv','simHealth','simLiqPrice','simRate'].forEach(id => {
+      document.getElementById(id).textContent = 'computing...';
+      document.getElementById(id).style.color = 'var(--text3)';
+    });
+    ['simColCipher','simBorCipher','simCompId','simSig'].forEach(id => {
+      document.getElementById(id).textContent = '—';
+    });
+    document.getElementById('simVerified').textContent = 'pending...';
+    document.getElementById('simVerified').style.color = 'var(--text3)';
+    document.getElementById('simResult').style.display = 'none';
+    document.getElementById('simLog').innerHTML = '<div class="sim-log-line dim">$ preset loaded. click Run Simulation to begin.</div>';
+  }
+
+  function randHex(len) {
+    return Array.from({length: len}, () => Math.floor(Math.random()*16).toString(16)).join('');
+  }
+
+  function addLog(text, type = '') {
+    const log = document.getElementById('simLog');
+    const line = document.createElement('div');
+    line.className = 'sim-log-line ' + type;
+    line.textContent = text;
+    log.appendChild(line);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  async function runSimulation() {
+    const preset = document.getElementById('simPreset').value;
+    const p = PRESETS[preset];
+    const btn = document.getElementById('simRunBtn');
+    btn.disabled = true;
+    btn.textContent = 'Running...';
+
+    const colUsd = p.col * 145;
+    const ltv = p.bor / colUsd;
+    const health = (colUsd * 0.60) / p.bor;
+    const liqPrice = (p.bor / (p.col * 0.60));
+    const rate = (0.045 + ltv * 0.05) * 100;
+
+    // Clear log
+    document.getElementById('simLog').innerHTML = '';
+    document.getElementById('simResult').style.display = 'none';
+
+    const delay = ms => new Promise(r => setTimeout(r, ms));
+
+    // Step 1 — input
+    addLog('$ initializing PrivateLend position...');
+    await delay(400);
+    addLog(`> collateral: ${p.col} SOL ($${colUsd.toFixed(2)})`);
+    await delay(300);
+    addLog(`> borrow: $${p.bor} USDC`);
+    await delay(400);
+
+    // Step 2 — encrypt
+    addLog('$ encrypting values with AES-256-GCM...');
+    await delay(500);
+    const colCipher = randHex(12);
+    const borCipher = randHex(12);
+    document.getElementById('simColCipher').textContent = colCipher + '...';
+    document.getElementById('simBorCipher').textContent = borCipher + '...';
+    addLog('> col_ciphertext: 0x' + colCipher + '...', 'cipher');
+    await delay(300);
+    addLog('> bor_ciphertext: 0x' + borCipher + '...', 'cipher');
+    await delay(400);
+    addLog('$ ciphertexts ready. submitting to Arcium MXE cluster...');
+    await delay(600);
+
+    // Step 3 — MXE compute
+    addLog('$ [arcium-mxe] received encrypted inputs');
+    await delay(400);
+    addLog('$ [arcium-mxe] initializing multi-party computation nodes...');
+    await delay(500);
+    addLog('$ [arcium-mxe] node_1: processing shard...');
+    await delay(300);
+    addLog('$ [arcium-mxe] node_2: processing shard...');
+    await delay(300);
+    addLog('$ [arcium-mxe] node_3: processing shard...');
+    await delay(400);
+    addLog('$ [arcium-mxe] combining shares — computing ltv...');
+    await delay(500);
+
+    // Reveal computed values
+    const ltvColor = ltv < 0.60 ? 'var(--green)' : ltv < 0.80 ? 'var(--warn)' : 'var(--danger)';
+    const hColor = health > 1.5 ? 'var(--green)' : health > 1.0 ? 'var(--warn)' : 'var(--danger)';
+    const el = document.getElementById('simLtv');
+    el.textContent = (ltv*100).toFixed(2) + '%';
+    el.style.color = ltvColor;
+    addLog(`> ltv_ratio: ${(ltv*100).toFixed(2)}% (${ltv < 0.60 ? 'safe' : ltv < 0.80 ? 'moderate' : 'HIGH RISK'})`, ltv >= 0.80 ? 'err' : ltv >= 0.60 ? 'warn' : '');
+    await delay(400);
+
+    const eh = document.getElementById('simHealth');
+    eh.textContent = health.toFixed(4);
+    eh.style.color = hColor;
+    addLog(`> health_factor: ${health.toFixed(4)} (${health > 1.5 ? 'healthy' : health > 1.0 ? 'at risk' : 'CRITICAL'})`, health <= 1.0 ? 'err' : health <= 1.5 ? 'warn' : '');
+    await delay(400);
+
+    const elq = document.getElementById('simLiqPrice');
+    elq.textContent = '$' + liqPrice.toFixed(2);
+    elq.style.color = 'var(--text2)';
+    addLog(`> liquidation_price: $${liqPrice.toFixed(2)} per SOL (encrypted — bots cannot see)`);
+    await delay(400);
+
+    const er = document.getElementById('simRate');
+    er.textContent = rate.toFixed(2) + '% APR';
+    er.style.color = 'var(--blue)';
+    addLog(`> interest_rate: ${rate.toFixed(2)}% APR (MXE computed from encrypted LTV)`);
+    await delay(500);
+
+    // Step 4 — ZK proof
+    addLog('$ [arcium-mxe] generating ZK proof...');
+    await delay(600);
+    const compId = Math.floor(Math.random() * 999999);
+    const sig = randHex(16);
+    document.getElementById('simCompId').textContent = compId.toString();
+    document.getElementById('simSig').textContent = sig.slice(0,12) + '...';
+    addLog(`> computation_id: ${compId}`);
+    await delay(300);
+    addLog(`> mxe_signature: 0x${sig}...`, 'cipher');
+    await delay(400);
+
+    // Proof type
+    const proofType = health > 1.0 ? 'ltv_within_bounds' : 'health_critical';
+    document.getElementById('simProofType').textContent = proofType;
+    addLog(`> proof_type: ${proofType}`);
+    await delay(400);
+
+    // Verified
+    const vEl = document.getElementById('simVerified');
+    if (health > 1.0) {
+      vEl.textContent = 'true ✓';
+      vEl.style.color = 'var(--green)';
+      addLog('$ [solana] proof verified on-chain ✓');
+      await delay(300);
+      addLog('$ [solana] storing ciphertexts + computation_id only');
+      await delay(300);
+      addLog('$ position opened successfully. LTV/health/liq_price: HIDDEN from chain.');
+    } else {
+      vEl.textContent = 'liquidatable';
+      vEl.style.color = 'var(--danger)';
+      addLog('$ [arcium-mxe] health < 1.0 — issuing liquidation proof', 'err');
+      await delay(300);
+      addLog('$ [solana] liquidation proof verified. executing liquidation.', 'err');
+      await delay(300);
+      addLog('$ note: bots never knew the exact trigger — MXE revealed only the boolean result.', 'warn');
+    }
+
+    await delay(300);
+    addLog('$ simulation complete.');
+
+    // Show result bar
+    const resultEl = document.getElementById('simResult');
+    resultEl.style.display = 'flex';
+    const rv = document.getElementById('simResultText');
+    if (health > 1.5) {
+      rv.textContent = 'Safe — Health ' + health.toFixed(2);
+      rv.style.color = 'var(--green)';
+    } else if (health > 1.0) {
+      rv.textContent = 'At Risk — Health ' + health.toFixed(2);
+      rv.style.color = 'var(--warn)';
+    } else {
+      rv.textContent = 'Liquidated — Health ' + health.toFixed(2);
+      rv.style.color = 'var(--danger)';
+    }
+
+    btn.disabled = false;
+    btn.textContent = 'Run Simulation';
+  }
+
+  // Load default preset on page load
+  window.addEventListener('DOMContentLoaded', () => loadPreset());
+
 </script>
 </body>
 </html>
