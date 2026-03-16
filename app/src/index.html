@@ -5,228 +5,558 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>PrivateLend — Privacy-First Lending on Solana x Arcium</title>
   <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
   <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
     :root {
-      --bg: #0a0e0c; --surface: #111714; --surface2: #161d19;
-      --border: rgba(29,158,117,0.15); --border2: rgba(29,158,117,0.3);
-      --green: #1D9E75; --green-light: #5DCAA5; --green-dim: rgba(29,158,117,0.1);
-      --blue: #378ADD; --blue-dim: rgba(55,138,221,0.1);
-      --warn: #EF9F27; --warn-dim: rgba(239,159,39,0.1);
-      --danger: #E24B4A; --danger-dim: rgba(226,75,74,0.1);
-      --text: #e8f0eb; --text2: #8fa89a; --text3: #556b61;
-      --mono: 'IBM Plex Mono', monospace; --sans: 'Syne', sans-serif;
+      --bg: #FFFFFF;
+      --surface: #F4F4F9;
+      --surface2: #EBEBF5;
+      --surface3: #E0E0F0;
+      --border: rgba(139,92,246,0.15);
+      --border-active: rgba(139,92,246,0.35);
+      --blue: #7C3AED;
+      --blue-hover: #6D28D9;
+      --blue-dim: rgba(124,58,237,0.1);
+      --green: #059669;
+      --green-dim: rgba(5,150,105,0.1);
+      --red: #E11D48;
+      --red-dim: rgba(225,29,72,0.1);
+      --amber: #D97706;
+      --amber-dim: rgba(217,119,6,0.1);
+      --cyan: #0891B2;
+      --cyan-dim: rgba(8,145,178,0.1);
+      --pink: #DB2777;
+      --pink-dim: rgba(219,39,119,0.1);
+      --text: #0F0F1A;
+      --text2: #4A4A6A;
+      --text3: #8080A0;
+      --mono: 'IBM Plex Mono', monospace;
+      --sans: 'Inter', sans-serif;
     }
     html { scroll-behavior: smooth; }
     body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
-    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(29,158,117,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(29,158,117,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(124,58,237,0.06) 1px, transparent 1px), linear-gradient(90deg, rgba(124,58,237,0.06) 1px, transparent 1px); background-size: 40px 40px; }
     .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
-    .toggle-3d { position: fixed; bottom: 2rem; right: 2rem; z-index: 100; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; color: var(--text2); font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.3s; }
-    .toggle-3d:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
-    header { display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 0; position: sticky; top: 0; background: rgba(10,14,12,0.95); backdrop-filter: blur(10px); z-index: 50; border-bottom: 1px solid var(--border); }
-    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
-    .logo-mark { width: 40px; height: 40px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--bg); }
-    .logo-name { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
-    .logo-tag { font-family: var(--mono); font-size: 10px; color: var(--green); }
-    nav { display: flex; gap: 2rem; align-items: center; }
-    nav a { font-family: var(--mono); font-size: 12px; color: var(--text2); text-decoration: none; transition: color 0.3s; }
-    nav a:hover { color: var(--green); }
-    .header-right { display: flex; gap: 10px; align-items: center; }
-    .btn { padding: 10px 20px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
-    .btn-primary { background: var(--green); color: var(--bg); }
-    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
-    .btn-secondary { border: 1px solid var(--border2); background: transparent; color: var(--text); }
-    .btn-secondary:hover { border-color: var(--green); background: var(--green-dim); }
-    .wallet-btn { font-family: var(--mono); font-size: 12px; padding: 10px 18px; border: 1px solid var(--border2); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
-    .wallet-btn:hover { border-color: var(--green); background: var(--green-dim); }
-    .wallet-btn.connected { border-color: var(--green); color: var(--green-light); }
-    .w-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
-    .w-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
-    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 4rem 0; }
+
+    /* ── Toggle 3D ── */
+    .toggle-3d { position: fixed; bottom: 2rem; right: 2rem; z-index: 100; padding: 8px 14px; background: var(--surface2); border: 1px solid var(--border-active); border-radius: 6px; color: var(--text2); font-family: var(--mono); font-size: 10px; cursor: pointer; transition: all 0.2s; letter-spacing: 0.5px; }
+    .toggle-3d:hover { border-color: var(--blue); color: var(--blue); }
+
+    /* ── Header ── */
+    header { display: flex; align-items: center; justify-content: space-between; padding: 1rem 0; position: sticky; top: 0; background: rgba(255,255,255,0.97); backdrop-filter: blur(12px); z-index: 50; border-bottom: 1px solid var(--border); }
+    .logo { display: flex; align-items: center; gap: 10px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 36px; height: 36px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 18px; color: #fff; }
+    .logo-name { font-size: 17px; font-weight: 700; letter-spacing: -0.3px; }
+    .logo-tag { font-family: var(--mono); font-size: 9px; color: var(--blue); margin-top: 1px; }
+    nav { display: flex; gap: 0; }
+    nav a { font-size: 13px; font-weight: 500; color: var(--text2); text-decoration: none; padding: 0.5rem 1rem; border-bottom: 2px solid transparent; transition: all 0.2s; }
+    nav a:hover { color: var(--text); border-bottom-color: var(--blue); }
+    .header-right { display: flex; gap: 8px; align-items: center; }
+    .net-badge { font-family: var(--mono); font-size: 10px; padding: 6px 12px; border-radius: 6px; background: rgba(8,145,178,0.08); border: 1px solid rgba(8,145,178,0.2); color: var(--cyan); display: flex; align-items: center; gap: 5px; }
+    .net-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.3} }
+    .btn { padding: 9px 18px; border-radius: 6px; border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; text-decoration: none; display: inline-flex; align-items: center; gap: 6px; justify-content: center; }
+    .btn-primary { background: var(--blue); color: #fff; }
+    .btn-primary:hover { background: var(--blue-hover); transform: translateY(-1px); }
+    .btn-secondary { border: 1px solid var(--border-active); background: var(--surface2); color: var(--text2); }
+    .btn-secondary:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
+    .wallet-btn { font-family: var(--sans); font-size: 13px; font-weight: 600; padding: 9px 18px; border: 1px solid rgba(124,58,237,0.3); border-radius: 6px; background: rgba(124,58,237,0.06); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
+    .wallet-btn:hover { border-color: var(--blue); background: var(--blue-dim); color: var(--blue); }
+    .wallet-btn.connected { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+    .w-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--text3); transition: all 0.3s; }
+    .w-dot.live { background: var(--green); box-shadow: 0 0 6px var(--green); }
+
+    /* ── Hero ── */
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 5rem 0; }
     #heroCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
-    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 800px; }
-    .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 700; line-height: 1.2; margin-bottom: 1.5rem; letter-spacing: -1px; animation: fadeInUp 0.8s ease-out; }
-    .hero h1 .highlight { color: var(--green-light); }
-    .hero p { font-size: 1.1rem; color: var(--text2); line-height: 1.8; margin-bottom: 2.5rem; animation: fadeInUp 0.8s ease-out 0.2s backwards; }
-    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease-out 0.4s backwards; }
-    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
-    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 820px; }
+    .hero-badge { display: inline-flex; align-items: center; gap: 8px; background: rgba(124,58,237,0.08); border: 1px solid rgba(124,58,237,0.25); border-radius: 20px; padding: 6px 16px; font-size: 12px; font-weight: 500; color: var(--blue); margin-bottom: 2rem; font-family: var(--mono); }
+    .hero h1 { font-size: clamp(2.5rem, 7vw, 4.5rem); font-weight: 700; line-height: 1.15; margin-bottom: 1.5rem; letter-spacing: -1.5px; }
+    .hero h1 .highlight { color: var(--blue); }
+    .hero p { font-size: 1.05rem; color: var(--text2); line-height: 1.8; margin-bottom: 2.5rem; max-width: 600px; margin-left: auto; margin-right: auto; text-shadow: 0 1px 2px rgba(255,255,255,0.8); }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .hero-stats { display: flex; gap: 3rem; justify-content: center; margin-top: 3rem; flex-wrap: wrap; }
+    .hero-stat { text-align: center; }
+    .hero-stat-num { font-size: 1.8rem; font-weight: 700; color: var(--blue); font-family: var(--mono); }
+    .hero-stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-top: 4px; }
+
+    /* ── Sections ── */
     section { padding: 5rem 0; position: relative; }
-    section h2 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; margin-bottom: 3rem; text-align: center; letter-spacing: -0.5px; }
+    .section-label { font-family: var(--mono); font-size: 11px; color: var(--blue); text-transform: uppercase; letter-spacing: 2px; margin-bottom: 1rem; display: block; text-align: center; }
+    section h2 { font-size: clamp(1.8rem, 4vw, 3rem); font-weight: 700; margin-bottom: 1rem; text-align: center; letter-spacing: -0.5px; }
+    .section-sub { text-align: center; color: var(--text2); font-size: 1rem; line-height: 1.7; max-width: 600px; margin: 0 auto 3rem; }
 
-    /* Problem */
-    .problem { background: linear-gradient(180deg, rgba(226,75,74,0.05) 0%, transparent 100%); }
-    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
-    .problem-card { background: var(--surface); border: 1px solid rgba(226,75,74,0.3); border-radius: 12px; padding: 2rem; transition: all 0.3s; position: relative; overflow: hidden; }
-    .problem-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--danger), transparent); }
-    .problem-card:hover { border-color: var(--danger); transform: translateY(-8px); box-shadow: 0 12px 40px rgba(226,75,74,0.2); }
-    .problem-number { font-family: var(--mono); font-size: 2.5rem; font-weight: 700; color: var(--danger); margin-bottom: 1rem; opacity: 0.3; }
-    .problem-card h3 { color: var(--danger); margin-bottom: 1rem; font-size: 1.1rem; }
-    .problem-card p { color: var(--text2); line-height: 1.7; font-size: 0.95rem; }
+    /* ── Problem ── */
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1.5rem; }
+    .problem-card { background: var(--surface); border: 1px solid rgba(225,29,72,0.15); border-radius: 12px; padding: 2rem; transition: all 0.3s; position: relative; overflow: hidden; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+    .problem-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 2px; background: linear-gradient(90deg, var(--red), transparent); }
+    .problem-card:hover { border-color: var(--red); transform: translateY(-6px); box-shadow: 0 16px 40px rgba(246,70,93,0.15); }
+    .problem-num { font-family: var(--mono); font-size: 11px; color: var(--red); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1rem; }
+    .problem-card h3 { font-size: 1.05rem; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+    .problem-card p { color: var(--text2); font-size: 0.9rem; line-height: 1.7; }
+    .problem-big { font-family: var(--mono); font-size: 2rem; font-weight: 700; color: var(--red); margin-bottom: 0.5rem; }
 
-    /* Solution */
-    .solution { background: linear-gradient(180deg, rgba(29,158,117,0.05) 0%, transparent 100%); }
-    .solution-flow-container { margin-bottom: 3rem; min-height: 400px; }
-    #flowCanvas { width: 100%; height: 400px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); display: block; }
+    /* ── Flow ── */
+    #flowCanvas { width: 100%; height: 380px; border: 1px solid var(--border); border-radius: 12px; background: var(--surface); display: block; }
 
-    /* How it works */
-    .how-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; margin-bottom: 3rem; }
-    .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
-    .step-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; transition: all 0.3s; cursor: pointer; }
-    .step-card:hover { border-color: var(--green); background: rgba(29,158,117,0.08); transform: translateY(-6px); }
-    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--green); border-radius: 50%; color: var(--bg); font-weight: 700; margin-bottom: 1rem; font-size: 18px; }
-    .step-card h3 { color: var(--green-light); margin-bottom: 1rem; font-size: 1.1rem; }
-    .step-card p { color: var(--text2); font-size: 0.95rem; line-height: 1.6; }
-    .comparison-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
-    .comparison-table th, .comparison-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border); }
-    .comparison-table th { background: var(--surface); font-weight: 600; color: var(--green-light); font-family: var(--mono); font-size: 12px; text-transform: uppercase; }
-    .comparison-table tr:hover { background: rgba(29,158,117,0.05); }
-    .comparison-table .feature { color: var(--text2); font-family: var(--mono); font-size: 13px; }
-    .comparison-table .check { color: var(--green); font-weight: 700; font-size: 18px; }
-    .comparison-table .cross { color: var(--danger); font-weight: 700; font-size: 18px; }
+    /* ── How It Works ── */
+    .card-box { background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem; box-shadow: 0 4px 24px rgba(0,0,0,0.06); }
+    .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; margin-bottom: 2.5rem; }
+    .step-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 1.5rem; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .step-card:hover { border-color: var(--blue); background: var(--blue-dim); transform: translateY(-4px); }
+    .step-num { width: 36px; height: 36px; background: var(--blue); border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #fff; font-weight: 700; font-size: 16px; margin-bottom: 1rem; }
+    .step-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 0.75rem; }
+    .step-card p { color: var(--text2); font-size: 0.875rem; line-height: 1.6; }
+    .comparison-table { width: 100%; border-collapse: collapse; }
+    .comparison-table th { padding: 0.9rem 1rem; text-align: left; background: var(--surface); font-size: 11px; font-weight: 600; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; border-bottom: 1px solid var(--border); }
+    .comparison-table td { padding: 0.9rem 1rem; border-bottom: 1px solid var(--border); font-size: 13px; }
+    .comparison-table tr:hover td { background: rgba(255,255,255,0.02); }
+    .comparison-table .feature { color: var(--text2); font-family: var(--mono); }
+    .comparison-table .check { color: var(--green); font-weight: 600; }
+    .comparison-table .cross { color: var(--red); font-weight: 600; }
 
-    /* Stats */
-    .stats { background: linear-gradient(180deg, rgba(29,158,117,0.08) 0%, transparent 100%); }
-    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
-    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem 2rem; text-align: center; transition: all 0.3s; }
-    .stat-card:hover { border-color: var(--green); transform: translateY(-8px); box-shadow: 0 12px 40px rgba(29,158,117,0.15); }
-    .stat-number { font-size: 2.8rem; font-weight: 700; color: var(--green-light); margin-bottom: 0.5rem; font-family: var(--mono); }
-    .stat-label { font-family: var(--mono); font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+    /* ── Stats ── */
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 1.5rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2rem 1.5rem; text-align: center; transition: all 0.3s; box-shadow: 0 2px 12px rgba(0,0,0,0.05); }
+    .stat-card:hover { border-color: var(--blue); transform: translateY(-6px); box-shadow: 0 16px 40px rgba(77,158,255,0.1); }
+    .stat-number { font-size: 2.5rem; font-weight: 700; color: var(--blue); margin-bottom: 0.5rem; font-family: var(--mono); }
+    .stat-label { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
 
-    /* Tech */
-    .tech-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; }
-    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
-    .tech-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s; }
-    .tech-card:hover { border-color: var(--green); background: rgba(29,158,117,0.08); transform: translateY(-8px); }
-    .tech-icon { width: 60px; height: 60px; background: var(--green-dim); border: 1px solid var(--border2); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 28px; }
-    .tech-card h3 { color: var(--green-light); margin-bottom: 0.5rem; }
-    .tech-card p { color: var(--text2); font-size: 0.9rem; line-height: 1.6; }
+    /* ── Tech ── */
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1.5rem; }
+    .tech-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 10px; padding: 1.75rem; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.06); }
+    .tech-card:hover { border-color: var(--blue); transform: translateY(-4px); }
+    .tech-icon { width: 52px; height: 52px; background: var(--blue-dim); border: 1px solid rgba(77,158,255,0.2); border-radius: 10px; display: flex; align-items: center; justify-content: center; margin-bottom: 1.25rem; font-size: 24px; }
+    .tech-card h3 { font-size: 1rem; font-weight: 600; color: var(--text); margin-bottom: 0.5rem; }
+    .tech-card p { color: var(--text2); font-size: 0.875rem; line-height: 1.6; }
 
-    /* Demo section — THE REAL APP */
-    .demo-section { background: linear-gradient(135deg, rgba(29,158,117,0.1) 0%, rgba(55,138,221,0.05) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 3rem 2rem; }
-    .demo-section h2 { margin-bottom: 1rem; }
-    .demo-section > p { font-size: 1rem; color: var(--text2); line-height: 1.8; max-width: 600px; margin: 0 auto 2rem; text-align: center; }
+    /* ── APP SECTION ── */
+    .demo-section { background: #FFFFFF; border: 1px solid var(--border); border-radius: 16px; padding: 2.5rem; box-shadow: 0 4px 24px rgba(124,58,237,0.08); }
 
     /* Balance bar */
     .balance-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
-    .bal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 150px; }
-    .bal-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: var(--surface2); flex-shrink: 0; }
-    .bal-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
-    .bal-value { font-size: 15px; font-weight: 600; }
-    .airdrop-btn { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--green-light); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
-    .airdrop-btn:hover:not(:disabled) { background: var(--green-dim); }
+    .bal-card { background: #FFFFFF; border: 1px solid var(--border); border-radius: 8px; padding: 10px 14px; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 140px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+    .bal-icon { width: 28px; height: 28px; border-radius: 6px; display: flex; align-items: center; justify-content: center; font-size: 14px; background: var(--surface3); flex-shrink: 0; }
+    .bal-label { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; }
+    .bal-value { font-size: 14px; font-weight: 600; color: var(--text); }
+    .airdrop-btn { font-size: 11px; padding: 6px 12px; border: 1px solid rgba(77,158,255,0.3); border-radius: 5px; background: var(--blue-dim); color: var(--blue); cursor: pointer; transition: all 0.2s; white-space: nowrap; font-weight: 500; }
+    .airdrop-btn:hover:not(:disabled) { background: var(--blue); color: #fff; }
     .airdrop-btn:disabled { opacity: 0.4; cursor: not-allowed; }
 
-    /* App panels */
-    .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
-    .app-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
-    .app-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
-    .app-panel-title { font-size: 14px; font-weight: 600; }
-    .tag { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
-    .tag-green { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
-    .tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(55,138,221,0.2); }
+    /* App grid */
+    .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-bottom: 12px; }
+    .app-panel { background: #FAFAFF; border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
+    .app-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.25rem; padding-bottom: 0.75rem; border-bottom: 1px solid var(--border); }
+    .app-panel-title { font-size: 13px; font-weight: 600; color: var(--text); }
+    .tag { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 500; }
+    .tag-green { background: var(--green-dim); color: var(--green); }
+    .tag-blue { background: var(--blue-dim); color: var(--blue); }
     .form-group { margin-bottom: 1rem; }
-    .form-label { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .form-label .usd { color: var(--green-light); }
+    .form-label { font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .form-label .usd { color: var(--blue); font-weight: 500; }
     .input-row { position: relative; }
-    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 52px 10px 14px; font-family: var(--mono); font-size: 14px; color: var(--text); transition: border-color 0.2s; }
-    .form-input:focus { outline: none; border-color: var(--green); }
+    .form-input { width: 100%; background: #FFFFFF; border: 1px solid var(--border); border-radius: 6px; padding: 9px 50px 9px 12px; font-family: var(--mono); font-size: 14px; color: var(--text); transition: border-color 0.2s; box-shadow: inset 0 1px 3px rgba(0,0,0,0.06); }
+    .form-input:focus { outline: none; border-color: var(--blue); }
     .form-input::placeholder { color: var(--text3); }
-    .input-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--text3); }
-    .max-btn { position: absolute; right: 44px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 9px; color: var(--green); cursor: pointer; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--green-dim); }
-    .ltv-section { margin-bottom: 1.2rem; }
-    .ltv-header { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
-    .ltv-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .input-tag { position: absolute; right: 10px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--text3); font-weight: 500; }
+    .max-btn { position: absolute; right: 42px; top: 50%; transform: translateY(-50%); font-size: 9px; color: var(--blue); cursor: pointer; padding: 2px 5px; border: 1px solid rgba(77,158,255,0.3); border-radius: 3px; background: var(--blue-dim); font-weight: 600; }
+    .max-btn:hover { background: var(--blue); color: #fff; }
+    .ltv-section { margin-bottom: 1.25rem; }
+    .ltv-header { font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 5px; text-transform: uppercase; letter-spacing: 0.3px; }
+    .ltv-pct { color: var(--text); font-weight: 600; }
+    .ltv-track { height: 5px; background: #E0E0F0; border-radius: 3px; overflow: hidden; }
     .ltv-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
-    .ltv-marks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; }
-    .action-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .ltv-marks { display: flex; justify-content: space-between; font-size: 9px; color: var(--text3); margin-top: 4px; font-family: var(--mono); }
+    .action-btn { width: 100%; padding: 11px; border-radius: 6px; border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.2s; }
     .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
-    .btn-green-solid { background: var(--green); color: var(--bg); }
-    .btn-green-solid:hover:not(:disabled) { opacity: 0.88; }
-    .btn-blue-solid { background: var(--blue); color: white; }
-    .btn-blue-solid:hover:not(:disabled) { opacity: 0.88; }
-    .health-wrap { display: flex; gap: 14px; align-items: center; margin-bottom: 1.2rem; }
+    .btn-blue-solid { background: var(--blue); color: #fff; }
+    .btn-blue-solid:hover:not(:disabled) { background: var(--blue-hover); }
+    .btn-outline-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(77,158,255,0.3); }
+    .btn-outline-blue:hover:not(:disabled) { background: var(--blue); color: #fff; }
+
+    /* Health panel */
+    .health-wrap { display: flex; gap: 14px; align-items: center; margin-bottom: 1.25rem; }
     .ring-wrap { position: relative; flex-shrink: 0; }
     .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
-    .ring-num { font-size: 16px; font-weight: 600; }
+    .ring-num { font-size: 15px; font-weight: 700; }
     .ring-sub { font-family: var(--mono); font-size: 9px; color: var(--text3); }
     .health-text p { font-size: 12px; color: var(--text2); line-height: 1.6; }
-    .enc-table { width: 100%; margin-bottom: 1.2rem; }
-    .enc-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .enc-table { width: 100%; margin-bottom: 1.25rem; }
+    .enc-row { display: flex; justify-content: space-between; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--border); }
     .enc-row:last-child { border-bottom: none; }
-    .enc-key { font-family: var(--mono); font-size: 11px; color: var(--text3); }
-    .enc-val { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--text); }
-    .enc-badge { font-size: 9px; color: var(--green); background: var(--green-dim); border: 1px solid var(--border); padding: 1px 6px; border-radius: 10px; }
-    .positions-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; margin-bottom: 1rem; }
+    .enc-key { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.3px; }
+    .enc-val { display: flex; align-items: center; gap: 6px; font-family: var(--mono); font-size: 12px; color: var(--text); font-weight: 500; }
+    .enc-badge { font-size: 9px; color: var(--blue); background: var(--blue-dim); border: 1px solid rgba(77,158,255,0.2); padding: 1px 6px; border-radius: 3px; }
+
+    /* Positions */
+    .positions-panel { background: #FAFAFF; border: 1px solid var(--border); border-radius: 10px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(0,0,0,0.04); }
     .pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
-    .pos-table th { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; text-align: left; padding: 0 10px 10px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
-    .pos-table td { padding: 11px 10px 11px 0; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .pos-table th { font-size: 10px; color: var(--text3); text-transform: uppercase; letter-spacing: 0.5px; text-align: left; padding: 0 12px 10px 0; border-bottom: 1px solid var(--border); font-weight: 500; }
+    .pos-table td { padding: 10px 12px 10px 0; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
     .pos-table tr:last-child td { border-bottom: none; }
+    .pos-table tr:hover td { background: rgba(255,255,255,0.02); }
     .hidden-dots { font-family: var(--mono); font-size: 12px; color: var(--text3); letter-spacing: 2px; }
-    .status-pill { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
-    .pill-safe { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
-    .pill-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); }
-    .pill-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(226,75,74,0.2); }
+    .status-pill { font-size: 10px; padding: 3px 8px; border-radius: 4px; font-weight: 600; }
+    .pill-safe { background: var(--green-dim); color: var(--green); }
+    .pill-warn { background: var(--amber-dim); color: var(--amber); }
+    .pill-danger { background: var(--red-dim); color: var(--red); }
     .tx-link { font-family: var(--mono); font-size: 11px; color: var(--blue); text-decoration: none; }
     .tx-link:hover { text-decoration: underline; }
 
     /* Wallet modal */
-    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(15,15,26,0.6); backdrop-filter: blur(4px); z-index: 200; align-items: center; justify-content: center; }
     .modal-overlay.open { display: flex; }
-    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 1.5rem; width: 340px; max-width: 90vw; }
-    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .modal { background: #FFFFFF; border: 1px solid var(--border-active); border-radius: 12px; padding: 1.5rem; width: 340px; max-width: 92vw; box-shadow: 0 20px 60px rgba(0,0,0,0.15); }
+    .modal-title { font-size: 16px; font-weight: 700; margin-bottom: 4px; }
     .modal-sub { font-size: 11px; color: var(--text3); margin-bottom: 1.25rem; font-family: var(--mono); }
-    .wallet-option { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; background: var(--surface2); }
-    .wallet-option:hover { border-color: var(--green); background: var(--green-dim); }
-    .wallet-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
-    .wallet-name { font-size: 14px; font-weight: 500; }
-    .wallet-desc { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
-    .ws-detected { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
-    .ws-install { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
-    .modal-close { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-family: var(--mono); font-size: 12px; cursor: pointer; margin-top: 4px; }
-    .modal-close:hover { background: var(--surface2); }
+    .wallet-option { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border: 1px solid var(--border); border-radius: 8px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; background: var(--surface); }
+    .wallet-option:hover { border-color: var(--blue); background: var(--blue-dim); }
+    .wallet-icon { width: 34px; height: 34px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .wallet-name { font-size: 14px; font-weight: 600; }
+    .wallet-desc { font-size: 10px; color: var(--text3); font-family: var(--mono); margin-top: 1px; }
+    .ws-detected { background: var(--green-dim); color: var(--green); font-size: 10px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; }
+    .ws-install { background: var(--amber-dim); color: var(--amber); font-size: 10px; font-family: var(--mono); padding: 2px 7px; border-radius: 4px; }
+    .modal-close { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 6px; color: var(--text2); font-size: 12px; cursor: pointer; margin-top: 4px; transition: all 0.2s; }
+    .modal-close:hover { background: var(--surface2); border-color: var(--border-active); }
 
     /* Toast */
-    .toast { position: fixed; bottom: 5rem; right: 2rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 12px; color: var(--text); z-index: 300; max-width: 320px; line-height: 1.5; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+    .toast { position: fixed; bottom: 5rem; right: 2rem; background: #FFFFFF; border: 1px solid var(--border-active); box-shadow: 0 8px 32px rgba(0,0,0,0.12); border-radius: 8px; padding: 12px 16px; font-family: var(--mono); font-size: 12px; color: var(--text); z-index: 300; max-width: 300px; line-height: 1.5; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
     .toast.show { transform: translateY(0); opacity: 1; }
-    .toast.success { border-color: var(--green); color: var(--green-light); }
-    .toast.error { border-color: var(--danger); color: #f09595; }
+    .toast.success { border-color: var(--green); color: var(--green); }
+    .toast.error { border-color: var(--red); color: var(--red); }
     .toast.info { border-color: var(--blue); color: var(--blue); }
 
     /* Creator */
-    .creator-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; text-align: center; max-width: 500px; margin: 0 auto; }
-    .creator-avatar { width: 100px; height: 100px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 36px; font-weight: 700; color: var(--bg); }
-    .creator-quote { font-size: 1rem; color: var(--text2); font-style: italic; line-height: 1.8; margin-bottom: 2rem; border-left: 3px solid var(--green); padding-left: 1.5rem; text-align: left; }
-    .creator-socials { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-    .social-link { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; font-family: var(--mono); font-size: 12px; transition: all 0.3s; }
-    .social-link:hover { border-color: var(--green); background: var(--green-dim); color: var(--green-light); }
+    .creator-box { background: #FFFFFF; border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem; text-align: center; max-width: 480px; margin: 0 auto; box-shadow: 0 4px 24px rgba(124,58,237,0.08); }
+    .creator-avatar { width: 88px; height: 88px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 32px; font-weight: 700; color: #fff; }
+    .creator-name { font-size: 1.2rem; font-weight: 700; margin-bottom: 4px; }
+    .creator-role { font-size: 11px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 1.5rem; }
+    .creator-quote { font-size: 0.9rem; color: var(--text2); font-style: italic; line-height: 1.8; margin-bottom: 1.75rem; border-left: 2px solid var(--blue); padding-left: 1rem; text-align: left; }
+    .creator-socials { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+    .social-link { display: inline-flex; align-items: center; gap: 6px; padding: 8px 14px; background: var(--surface); border: 1px solid var(--border); border-radius: 6px; color: var(--text2); text-decoration: none; font-size: 12px; font-weight: 500; transition: all 0.2s; }
+    .social-link:hover { border-color: var(--blue); color: var(--blue); background: var(--blue-dim); }
 
     /* Footer */
     footer { border-top: 1px solid var(--border); padding: 3rem 0; margin-top: 5rem; }
-    .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
-    .footer-col h4 { color: var(--green-light); margin-bottom: 1rem; font-size: 0.95rem; }
-    .footer-col a { display: block; color: var(--text2); text-decoration: none; font-size: 0.9rem; margin-bottom: 0.75rem; transition: color 0.3s; font-family: var(--mono); }
-    .footer-col a:hover { color: var(--green); }
-    .footer-col p { color: var(--text2); font-size: 0.9rem; line-height: 1.6; }
-    .footer-bottom { border-top: 1px solid var(--border); padding-top: 2rem; text-align: center; color: var(--text3); font-family: var(--mono); font-size: 12px; }
+    .footer-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
+    .footer-col h4 { font-size: 13px; font-weight: 600; color: var(--text); margin-bottom: 1rem; }
+    .footer-col a { display: block; color: var(--text2); text-decoration: none; font-size: 13px; margin-bottom: 0.6rem; transition: color 0.2s; }
+    .footer-col a:hover { color: var(--blue); }
+    .footer-col p { color: var(--text2); font-size: 13px; line-height: 1.6; }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 1.5rem; text-align: center; color: var(--text3); font-family: var(--mono); font-size: 11px; }
 
-    /* Net badge */
-    .net-badge { font-family: var(--mono); font-size: 11px; padding: 8px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--blue); display: flex; align-items: center; gap: 6px; }
-    .net-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
 
-    .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    /* ── Animated Buttons ── */
+    .btn-primary {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(139,92,246,0.4);
+    }
+    .btn-primary::before {
+      content: '';
+      position: absolute;
+      top: 0; left: -100%;
+      width: 100%; height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+    .btn-primary:hover::before { left: 100%; }
+    .btn-primary:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 0 35px rgba(139,92,246,0.7), 0 0 60px rgba(6,182,212,0.3);
+    }
+    .btn-primary:active { transform: scale(0.97); }
+
+    .btn-secondary {
+      border: 1px solid rgba(139,92,246,0.4);
+      background: rgba(139,92,246,0.08);
+      color: var(--text2);
+      position: relative;
+      overflow: hidden;
+    }
+    .btn-secondary:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-dim);
+      box-shadow: 0 0 20px rgba(139,92,246,0.25);
+    }
+
+    .wallet-btn {
+      position: relative;
+      overflow: hidden;
+    }
+    .wallet-btn::after {
+      content: '';
+      position: absolute;
+      inset: -1px;
+      border-radius: 6px;
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4, #EC4899);
+      z-index: -1;
+      opacity: 0;
+      transition: opacity 0.3s;
+    }
+    .wallet-btn:hover::after { opacity: 1; }
+    .wallet-btn.connected {
+      background: linear-gradient(135deg, rgba(16,185,129,0.15), rgba(6,182,212,0.1));
+      border-color: var(--green);
+      box-shadow: 0 0 15px rgba(16,185,129,0.2);
+    }
+
+    /* ── Action buttons glow ── */
+    .btn-blue-solid {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+      color: #fff;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 0 20px rgba(139,92,246,0.35);
+      transition: all 0.3s;
+    }
+    .btn-blue-solid::before {
+      content: '';
+      position: absolute;
+      top: 50%; left: 50%;
+      width: 0; height: 0;
+      background: rgba(255,255,255,0.15);
+      border-radius: 50%;
+      transform: translate(-50%, -50%);
+      transition: width 0.4s, height 0.4s;
+    }
+    .btn-blue-solid:hover::before { width: 300px; height: 300px; }
+    .btn-blue-solid:hover:not(:disabled) {
+      box-shadow: 0 0 40px rgba(139,92,246,0.6), 0 0 80px rgba(6,182,212,0.3);
+      transform: translateY(-2px);
+    }
+    .btn-blue-solid:active:not(:disabled) { transform: scale(0.97); }
+
+    .btn-outline-blue {
+      background: rgba(139,92,246,0.08);
+      color: var(--blue);
+      border: 1px solid rgba(139,92,246,0.35);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .btn-outline-blue:hover:not(:disabled) {
+      background: linear-gradient(135deg, rgba(139,92,246,0.2), rgba(6,182,212,0.1));
+      border-color: var(--cyan);
+      color: var(--cyan);
+      box-shadow: 0 0 25px rgba(6,182,212,0.3);
+      transform: translateY(-1px);
+    }
+
+    .airdrop-btn {
+      background: rgba(16,185,129,0.1);
+      border: 1px solid rgba(16,185,129,0.3);
+      color: var(--green);
+      position: relative;
+      overflow: hidden;
+      transition: all 0.3s;
+    }
+    .airdrop-btn:hover:not(:disabled) {
+      background: var(--green);
+      color: #fff;
+      box-shadow: 0 0 20px rgba(16,185,129,0.4);
+      transform: translateY(-1px);
+    }
+
+    /* ── Hero badge glow ── */
+    .hero-badge {
+      animation: badgePulse 3s ease-in-out infinite;
+    }
+    @keyframes badgePulse {
+      0%,100% { box-shadow: 0 0 10px rgba(139,92,246,0.2); }
+      50% { box-shadow: 0 0 25px rgba(139,92,246,0.5), 0 0 50px rgba(6,182,212,0.2); }
+    }
+
+    /* ── Hero stats glow ── */
+    .hero-stat-num {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Card hover glow ── */
+    .stat-card:hover {
+      box-shadow: 0 0 30px rgba(139,92,246,0.2), 0 16px 40px rgba(0,0,0,0.3);
+    }
+    .step-card:hover {
+      box-shadow: 0 0 25px rgba(139,92,246,0.2);
+    }
+    .tech-card:hover {
+      box-shadow: 0 0 25px rgba(139,92,246,0.15);
+    }
+    .problem-card:hover {
+      box-shadow: 0 16px 40px rgba(244,63,94,0.15), 0 0 30px rgba(244,63,94,0.1);
+    }
+
+    /* ── Logo mark gradient ── */
+    .logo-mark {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important;
+    }
+
+    /* ── Step number gradient ── */
+    .step-num {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important;
+    }
+
+    /* ── Net badge ── */
+    .net-badge {
+      border-color: rgba(6,182,212,0.3);
+      color: var(--cyan);
+    }
+    .net-dot { background: var(--cyan) !important; }
+
+    /* ── Tag styles ── */
+    .tag-green { background: rgba(16,185,129,0.12); color: var(--green); border: 1px solid rgba(16,185,129,0.25); }
+    .tag-blue { background: rgba(139,92,246,0.12); color: var(--blue); border: 1px solid rgba(139,92,246,0.25); }
+
+    /* ── Section label gradient ── */
+    .section-label {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Creator avatar ── */
+    .creator-avatar {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4) !important;
+      box-shadow: 0 0 30px rgba(139,92,246,0.4);
+    }
+
+    /* ── Health ring ── */
+    #healthRing { stroke: #8B5CF6; }
+
+    /* ── Enc badge ── */
+    .enc-badge {
+      background: rgba(139,92,246,0.12);
+      color: #8B5CF6;
+      border-color: rgba(139,92,246,0.25);
+    }
+
+    /* ── Hero highlight ── */
+    .hero h1 .highlight {
+      background: linear-gradient(135deg, #8B5CF6, #06B6D4, #EC4899);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    /* ── Glowing divider ── */
+    .app-panel-header {
+      border-bottom: 1px solid rgba(124,58,237,0.12); box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    /* ── Social link hover ── */
+    .social-link:hover {
+      border-color: var(--blue);
+      color: var(--blue);
+      background: var(--blue-dim);
+      box-shadow: 0 0 15px rgba(139,92,246,0.2);
+    }
+
+    /* ── Animated border on panels ── */
+    .app-panel {
+      position: relative;
+      transition: all 0.3s;
+    }
+    .app-panel:hover {
+      border-color: rgba(139,92,246,0.3);
+      box-shadow: 0 0 20px rgba(139,92,246,0.1);
+    }
+
+    /* ── Wallet option hover ── */
+    .wallet-option:hover {
+      border-color: var(--blue);
+      background: var(--blue-dim);
+      box-shadow: 0 0 20px rgba(139,92,246,0.2);
+    }
+
+    /* ── Toggle 3D button ── */
+    .toggle-3d {
+      background: rgba(124,58,237,0.08);
+      border: 1px solid rgba(124,58,237,0.25);
+      color: var(--blue);
+      transition: all 0.3s;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.08);
+    }
+    .toggle-3d:hover {
+      box-shadow: 0 0 20px rgba(139,92,246,0.3);
+      border-color: var(--cyan);
+      color: var(--cyan);
+    }
+
+    /* ── Header gradient border ── */
+    header {
+      border-bottom: 1px solid rgba(124,58,237,0.12); box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+    }
+
+    /* ── Max button ── */
+    .max-btn {
+      background: rgba(139,92,246,0.15);
+      border: 1px solid rgba(139,92,246,0.3);
+      color: var(--blue);
+    }
+    .max-btn:hover { background: var(--blue); color: #fff; }
+
+    /* ── LTV fill gradient ── */
+    #ltvFill { background: linear-gradient(90deg, #8B5CF6, #06B6D4) !important; }
+
+    /* ── Comparison check/cross ── */
+    .comparison-table .check { color: var(--green); }
+    .comparison-table .cross { color: var(--red); }
+
+    /* ── Footer ── */
+    footer { border-top: 1px solid rgba(139,92,246,0.15); }
+    .footer-bottom { color: var(--text3); }
+    .footer-col a:hover { color: var(--blue); }
+
+    /* ── Pill styles ── */
+    .pill-safe { background: rgba(16,185,129,0.12); color: var(--green); }
+    .pill-warn { background: rgba(245,158,11,0.12); color: var(--amber); }
+    .pill-danger { background: rgba(244,63,94,0.12); color: var(--red); }
+
+    /* ── Glow on hero CTA ── */
+    .hero-cta .btn-primary {
+      font-size: 15px; padding: 13px 30px;
+      animation: ctaGlow 3s ease-in-out infinite;
+    }
+    @keyframes ctaGlow {
+      0%,100% { box-shadow: 0 0 20px rgba(139,92,246,0.4); }
+      50% { box-shadow: 0 0 40px rgba(139,92,246,0.7), 0 0 80px rgba(6,182,212,0.3); }
+    }
+
+    /* ── Fade in animation ── */
+    @keyframes fadeInUp {
+      from { opacity: 0; transform: translateY(30px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+    .hero-content > * {
+      animation: fadeInUp 0.8s ease-out backwards;
+    }
+    .hero-badge { animation-delay: 0s; }
+    .hero h1 { animation-delay: 0.1s; }
+    .hero p { animation-delay: 0.2s; }
+    .hero-cta { animation-delay: 0.3s; }
+    .hero-stats { animation-delay: 0.4s; }
+
+    .fade-in { opacity: 0; transform: translateY(24px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
     .fade-in.visible { opacity: 1; transform: translateY(0); }
 
     @media (max-width: 768px) {
-      nav { gap: 1rem; } nav a { font-size: 11px; }
+      .app-grid { grid-template-columns: 1fr; }
       .hero h1 { font-size: 2rem; }
       .hero-cta { flex-direction: column; }
-      section { padding: 3rem 0; }
-      .app-grid { grid-template-columns: 1fr; }
+      .hero-stats { gap: 1.5rem; }
       header { flex-wrap: wrap; gap: 0.5rem; }
+      nav { display: none; }
+      section { padding: 3rem 0; }
       .balance-bar { flex-direction: column; }
     }
   </style>
@@ -239,17 +569,17 @@
     <div class="modal-title">Connect Wallet</div>
     <div class="modal-sub">// select a Solana-compatible wallet</div>
     <div class="wallet-option" onclick="connectWallet('phantom')">
-      <div class="wallet-icon" style="background:#4c1d95;">👻</div>
+      <div class="wallet-icon" style="background:#4c1d95;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;">PHT</div>
       <div><div class="wallet-name">Phantom</div><div class="wallet-desc">phantom.app</div></div>
       <span id="phantomStatus" class="ws-install">checking...</span>
     </div>
     <div class="wallet-option" onclick="connectWallet('solflare')">
-      <div class="wallet-icon" style="background:#fc7227;">🔥</div>
+      <div class="wallet-icon" style="background:#fc7227;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;">SFL</div>
       <div><div class="wallet-name">Solflare</div><div class="wallet-desc">solflare.com</div></div>
       <span id="solflareStatus" class="ws-install">checking...</span>
     </div>
     <div class="wallet-option" onclick="connectWallet('backpack')">
-      <div class="wallet-icon" style="background:#e33e3f;">🎒</div>
+      <div class="wallet-icon" style="background:#e33e3f;font-family:var(--mono);font-size:11px;font-weight:600;color:#fff;">BPK</div>
       <div><div class="wallet-name">Backpack</div><div class="wallet-desc">backpack.app</div></div>
       <span id="backpackStatus" class="ws-install">checking...</span>
     </div>
@@ -258,7 +588,7 @@
 </div>
 
 <div class="toast" id="toast"></div>
-<button class="toggle-3d" id="toggle3d">Disable 3D</button>
+<button class="toggle-3d" id="toggle3d">DISABLE 3D</button>
 
 <div class="container">
 
@@ -266,12 +596,12 @@
   <header>
     <a href="#" class="logo">
       <div class="logo-mark">P</div>
-      <div><div class="logo-name">PrivateLend</div><div class="logo-tag">Arcium x Solana</div></div>
+      <div><div class="logo-name">PrivateLend</div><div class="logo-tag">Arcium × Solana</div></div>
     </a>
     <nav>
       <a href="#problem">Problem</a>
       <a href="#solution">Solution</a>
-      <a href="#demo">App</a>
+      <a href="#app">App</a>
       <a href="#stats">Stats</a>
       <a href="#creator">Creator</a>
     </nav>
@@ -289,238 +619,256 @@
   <section class="hero">
     <canvas id="heroCanvas"></canvas>
     <div class="hero-content">
-      <h1>The End of <span class="highlight">Predatory Liquidations</span> in DeFi</h1>
-      <p>PrivateLend encrypts your collateral, LTV ratio, health factor and liquidation price inside Arcium MXE so bots see nothing. Connect your wallet and test it live on Solana Devnet right now.</p>
+      
+      <h1>Stop Getting <span class="highlight">Front-Run</span><br/>by Liquidation Bots</h1>
+      <p>PrivateLend encrypts your collateral, LTV, health factor and liquidation price inside Arcium MXE. Bots see nothing. Your positions are mathematically hidden while remaining fully functional on Solana.</p>
       <div class="hero-cta">
-        <a href="#demo" class="btn btn-primary" style="font-size:16px;padding:14px 32px;">Launch App</a>
-        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary" style="font-size:16px;padding:14px 32px;">View on GitHub</a>
+        <a href="#app" class="btn btn-primary" style="font-size:15px;padding:12px 28px;">Launch App</a>
+        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary" style="font-size:15px;padding:12px 28px;">View GitHub</a>
+      </div>
+      <div class="hero-stats">
+        <div class="hero-stat"><div class="hero-stat-num">$50B+</div><div class="hero-stat-label">DeFi lending market</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">$1.3B+</div><div class="hero-stat-label">Lost to MEV yearly</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">100%</div><div class="hero-stat-label">Protocols expose you</div></div>
+        <div class="hero-stat"><div class="hero-stat-num">0</div><div class="hero-stat-label">Had privacy before</div></div>
       </div>
     </div>
   </section>
 
   <!-- PROBLEM -->
-  <section id="problem" class="problem">
+  <section id="problem">
+    <span class="section-label">The Problem</span>
     <h2>Every DeFi Protocol Exposes You</h2>
+    <p class="section-sub">Your liquidation price, health factor, and collateral are publicly readable by any bot — in real time, every second of every day.</p>
     <div class="problem-grid">
       <div class="problem-card fade-in">
-        <div class="problem-number">01</div>
+        <div class="problem-big">$1.3B</div>
+        <div class="problem-num">01 — MEV Extraction</div>
+        <h3>You're Paying for Bot Infrastructure</h3>
+        <p>Every year liquidation bots extract over $1.3 billion from DeFi users. They are paid directly from your liquidation penalties. This is not a bug — it is a feature of transparent on-chain lending.</p>
+      </div>
+      <div class="problem-card fade-in">
+        <div class="problem-big">100%</div>
+        <div class="problem-num">02 — Zero Privacy</div>
         <h3>Your Liquidation Price is Public</h3>
-        <p>Bots see your exact liquidation price on-chain. They front-run your transactions and manipulate prices to trigger liquidations, extracting value directly from your position.</p>
+        <p>Bots read your exact liquidation threshold from on-chain data. They pre-position and front-run your liquidation in the same block. You lose 5–15% before you even see the notification.</p>
       </div>
       <div class="problem-card fade-in">
-        <div class="problem-number">02</div>
-        <h3>$1.3B Lost to MEV Annually</h3>
-        <p>MEV is systematically extracted from DeFi users through sandwich attacks, liquidation front-running and price manipulation. You are paying for this every single day.</p>
-      </div>
-      <div class="problem-card fade-in">
-        <div class="problem-number">03</div>
-        <h3>Zero Position Privacy Exists</h3>
-        <p>100% of existing DeFi protocols expose your collateral, LTV ratios, health factors and liquidation prices. There is no privacy option anywhere in the ecosystem.</p>
+        <div class="problem-big">0</div>
+        <div class="problem-num">03 — No Solution Existed</div>
+        <h3>Until Now</h3>
+        <p>Every lending protocol — Aave, Compound, MarginFi, Kamino — has zero position privacy. Not a single one encrypts your health factor or hides your liquidation price. PrivateLend is the first.</p>
       </div>
     </div>
   </section>
 
   <!-- SOLUTION -->
-  <section id="solution" class="solution">
-    <h2>PrivateLend Changes Everything</h2>
-    <div class="solution-flow-container">
-      <canvas id="flowCanvas"></canvas>
-    </div>
+  <section id="solution">
+    <span class="section-label">The Solution</span>
+    <h2>PrivateLend + Arcium MXE</h2>
+    <p class="section-sub">All sensitive computations run inside Arcium's encrypted multi-party execution environment. The Solana program stores only ciphertexts.</p>
+    <canvas id="flowCanvas"></canvas>
   </section>
 
   <!-- HOW IT WORKS -->
   <section id="how">
-    <div class="how-section">
-      <h2>How It Works</h2>
+    <div class="card-box">
+      <span class="section-label" style="text-align:left;margin-bottom:0.5rem;">How It Works</span>
+      <h2 style="text-align:left;margin-bottom:2rem;">Three Steps. Total Privacy.</h2>
       <div class="how-steps">
         <div class="step-card fade-in">
-          <div class="step-number">1</div>
-          <h3>Supply Collateral</h3>
-          <p>Encrypt your collateral before it touches Solana. Only you and the MXE enclave know the real amount. Bots see ciphertext only.</p>
+          <div class="step-num">1</div>
+          <h3>Supply Collateral — Encrypted</h3>
+          <p>Your collateral amount is encrypted on your device using AES-256-GCM before it touches Solana. The chain stores only a ciphertext — bots see nothing.</p>
         </div>
         <div class="step-card fade-in">
-          <div class="step-number">2</div>
-          <h3>Borrow Privately</h3>
-          <p>Your LTV ratio and health factor are computed inside MXE. You see the values. Bots see nothing. The protocol verifies via ZK proof.</p>
+          <div class="step-num">2</div>
+          <h3>Borrow — MXE Computes in Secret</h3>
+          <p>LTV ratio, health factor and interest rate are computed inside Arcium MXE. You see the results. The protocol verifies via ZK proof. Bots see zero.</p>
         </div>
         <div class="step-card fade-in">
-          <div class="step-number">3</div>
-          <h3>Protected from Bots</h3>
-          <p>Your liquidation price is mathematically hidden. Bots cannot front-run what they cannot see. MEV attacks become impossible.</p>
+          <div class="step-num">3</div>
+          <h3>Liquidation — Mathematically Hidden</h3>
+          <p>Liquidation only fires when MXE issues a ZK proof that health &lt; 1.0. The trigger price is never exposed. Front-running is mathematically impossible.</p>
         </div>
       </div>
-      <h3 style="text-align:center;margin-bottom:1.5rem;color:var(--green-light);">Traditional DeFi vs PrivateLend</h3>
       <table class="comparison-table">
-        <thead><tr><th>Feature</th><th>Traditional DeFi</th><th>PrivateLend</th></tr></thead>
+        <thead><tr><th>Data Point</th><th>Traditional DeFi</th><th>PrivateLend</th></tr></thead>
         <tbody>
-          <tr><td class="feature">Collateral Visibility</td><td class="cross">✕ Public</td><td class="check">✓ Encrypted</td></tr>
-          <tr><td class="feature">LTV Ratio</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
-          <tr><td class="feature">Health Factor</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
-          <tr><td class="feature">Liquidation Price</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
-          <tr><td class="feature">Front-Running Risk</td><td class="cross">✕ High</td><td class="check">✓ Eliminated</td></tr>
-          <tr><td class="feature">MEV Exposure</td><td class="cross">✕ Vulnerable</td><td class="check">✓ Protected</td></tr>
+          <tr><td class="feature">Collateral amount</td><td class="cross">✕ Fully public</td><td class="check">✓ AES-256 encrypted</td></tr>
+          <tr><td class="feature">LTV ratio</td><td class="cross">✕ Fully public</td><td class="check">✓ MXE only</td></tr>
+          <tr><td class="feature">Health factor</td><td class="cross">✕ Real-time public</td><td class="check">✓ MXE only</td></tr>
+          <tr><td class="feature">Liquidation price</td><td class="cross">✕ Bots monitor it</td><td class="check">✓ Mathematically hidden</td></tr>
+          <tr><td class="feature">Front-running risk</td><td class="cross">✕ Trivially easy</td><td class="check">✓ Eliminated</td></tr>
+          <tr><td class="feature">MEV exposure</td><td class="cross">✕ $1.3B/year</td><td class="check">✓ Protected</td></tr>
         </tbody>
       </table>
     </div>
   </section>
 
-  <!-- ═══════════════════════════════════════════
-       LIVE APP SECTION — REAL WALLET + LENDING
-  ═══════════════════════════════════════════ -->
-  <section id="demo" class="demo-section">
-    <h2>Try It Live on Devnet</h2>
-    <p>Connect your Phantom, Solflare or Backpack wallet. Get free Devnet SOL. Open a real on-chain position and watch Arcium MXE encrypt and compute your position in real time.</p>
+  <!-- ═══════════════════════════ LIVE APP ═══════════════════════════ -->
+  <section id="app">
+    <span class="section-label">Live on Devnet</span>
+    <h2 style="margin-bottom:0.5rem;">Try PrivateLend Now</h2>
+    <p class="section-sub">Connect your wallet, get free Devnet SOL, open a real on-chain position and watch MXE encrypt your position in real time.</p>
 
-    <!-- Balance bar (shown after connect) -->
-    <div class="balance-bar" id="balanceBar" style="display:none;">
-      <div class="bal-card">
-        <div class="bal-icon">◎</div>
-        <div style="flex:1;">
-          <div class="bal-label">SOL Balance (Devnet)</div>
-          <div class="bal-value" id="solBalance">0.0000</div>
+    <div class="demo-section">
+      <!-- Balance bar -->
+      <div class="balance-bar" id="balanceBar" style="display:none;">
+        <div class="bal-card">
+          <div class="bal-icon" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);">SOL</div>
+          <div style="flex:1;"><div class="bal-label">SOL Balance — Devnet</div><div class="bal-value" id="solBalance">0.0000</div></div>
+          <button class="airdrop-btn" id="airdropBtn" onclick="requestAirdrop()">+ Airdrop 2 SOL</button>
         </div>
-        <button class="airdrop-btn" id="airdropBtn" onclick="requestAirdrop()">+ Airdrop 2 SOL</button>
-      </div>
-      <div class="bal-card">
-        <div class="bal-icon">◑</div>
-        <div style="flex:1;">
-          <div class="bal-label">Wallet</div>
-          <div class="bal-value" id="walletShort" style="font-size:13px;font-family:var(--mono);">—</div>
+        <div class="bal-card">
+          <div class="bal-icon" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--blue);">WLT</div>
+          <div style="flex:1;"><div class="bal-label">Wallet</div><div class="bal-value" id="walletShort" style="font-size:12px;font-family:var(--mono);">—</div></div>
+          <button class="airdrop-btn" onclick="disconnectWallet()">Disconnect</button>
         </div>
-        <button class="airdrop-btn" onclick="disconnectWallet()">Disconnect</button>
-      </div>
-      <div class="bal-card">
-        <div class="bal-icon">🔗</div>
-        <div style="flex:1;">
-          <div class="bal-label">Explorer</div>
-          <div class="bal-value" style="font-size:12px;"><a id="explorerLink" href="#" target="_blank" class="tx-link">View on Solscan ↗</a></div>
+        <div class="bal-card">
+          <div class="bal-icon" style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--cyan);">EXP</div>
+          <div style="flex:1;"><div class="bal-label">Explorer</div><div class="bal-value" style="font-size:12px;"><a id="explorerLink" href="#" target="_blank" class="tx-link">Solscan ↗</a></div></div>
         </div>
-      </div>
-    </div>
-
-    <!-- Supply & Health panels -->
-    <div class="app-grid">
-      <div class="app-panel">
-        <div class="app-panel-header">
-          <span class="app-panel-title">Supply &amp; Borrow</span>
-          <span class="tag tag-green">encrypted</span>
-        </div>
-        <div class="form-group">
-          <div class="form-label">Collateral (SOL) <span class="usd" id="colUsd">$0.00</span></div>
-          <div class="input-row">
-            <input class="form-input" id="colInput" type="number" min="0" step="0.1" placeholder="0.00" oninput="calcApp()" />
-            <span class="max-btn" onclick="setMax()">MAX</span>
-            <span class="input-tag">SOL</span>
-          </div>
-        </div>
-        <div class="form-group">
-          <div class="form-label">Borrow Amount <span class="usd" id="borUsd">$0.00</span></div>
-          <div class="input-row">
-            <input class="form-input" id="borInput" type="number" min="0" step="1" placeholder="0.00" oninput="calcApp()" />
-            <span class="input-tag">USDC</span>
-          </div>
-        </div>
-        <div class="ltv-section">
-          <div class="ltv-header">LTV Ratio <span id="ltvPct" style="color:var(--text);font-weight:500;">0.0%</span></div>
-          <div class="ltv-track"><div class="ltv-fill" id="ltvFill" style="width:0%;background:var(--green);"></div></div>
-          <div class="ltv-marks"><span>0%</span><span>safe 60%</span><span>max 80%</span></div>
-        </div>
-        <button class="action-btn btn-green-solid" id="supplyBtn" onclick="openPosition()" disabled>Connect Wallet to Supply</button>
       </div>
 
-      <div class="app-panel">
-        <div class="app-panel-header">
-          <span class="app-panel-title">Position Health</span>
-          <span class="tag tag-blue">live</span>
-        </div>
-        <div class="health-wrap">
-          <div class="ring-wrap">
-            <svg width="72" height="72" viewBox="0 0 72 72">
-              <circle cx="36" cy="36" r="27" fill="none" stroke="rgba(29,158,117,0.12)" stroke-width="8"/>
-              <circle cx="36" cy="36" r="27" fill="none" id="healthRing" stroke="#1D9E75" stroke-width="8" stroke-dasharray="169.6" stroke-dashoffset="169.6" stroke-linecap="round" transform="rotate(-90 36 36)"/>
-            </svg>
-            <div class="ring-center">
-              <div class="ring-num" id="ringNum" style="color:#1D9E75;">—</div>
-              <div class="ring-sub">health</div>
+      <!-- Connect prompt -->
+      <div id="connectPrompt" style="text-align:center;padding:2rem 0;">
+        
+        <div style="font-size:15px;font-weight:600;margin-bottom:0.5rem;">Connect your wallet to start lending</div>
+        <div style="font-size:13px;color:var(--text2);margin-bottom:1.5rem;">Supports Phantom, Solflare and Backpack on Solana Devnet</div>
+        <button class="btn btn-primary" onclick="openWalletModal()" style="font-size:14px;padding:12px 28px;">Connect Wallet</button>
+      </div>
+
+      <!-- App panels (shown after connect) -->
+      <div id="appPanels" style="display:none;">
+        <div class="app-grid">
+          <!-- Supply panel -->
+          <div class="app-panel">
+            <div class="app-panel-header">
+              <span class="app-panel-title">Supply &amp; Borrow</span>
+              <span class="tag tag-green">MXE Encrypted</span>
             </div>
+            <div class="form-group">
+              <div class="form-label">Collateral (SOL) <span class="usd" id="colUsd">$0.00</span></div>
+              <div class="input-row">
+                <input class="form-input" id="colInput" type="number" min="0" step="0.1" placeholder="0.00" oninput="calcApp()" />
+                <span class="max-btn" onclick="setMax()">MAX</span>
+                <span class="input-tag">SOL</span>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Borrow Amount <span class="usd" id="borUsd">$0.00</span></div>
+              <div class="input-row">
+                <input class="form-input" id="borInput" type="number" min="0" step="1" placeholder="0.00" oninput="calcApp()" />
+                <span class="input-tag">USDC</span>
+              </div>
+            </div>
+            <div class="ltv-section">
+              <div class="ltv-header">LTV Ratio <span class="ltv-pct" id="ltvPct">0.0%</span></div>
+              <div class="ltv-track"><div class="ltv-fill" id="ltvFill" style="width:0%;background:var(--blue);"></div></div>
+              <div class="ltv-marks"><span>0%</span><span>safe 60%</span><span>max 80%</span></div>
+            </div>
+            <button class="action-btn btn-blue-solid" id="supplyBtn" onclick="openPosition()">Encrypt &amp; Supply Collateral</button>
           </div>
-          <div class="health-text">
-            <p>Health factor <strong id="healthStatusText" style="color:var(--text);">not set</strong>. Liquidation triggers below <strong style="color:var(--danger);">1.0</strong>. Position encrypted in Arcium MXE — bots cannot read your liquidation price.</p>
-          </div>
-        </div>
-        <div class="enc-table">
-          <div class="enc-row"><span class="enc-key">collateral_value</span><span class="enc-val"><span id="eCol">—</span><span class="enc-badge">encrypted</span></span></div>
-          <div class="enc-row"><span class="enc-key">borrow_balance</span><span class="enc-val"><span id="eBor">—</span><span class="enc-badge">encrypted</span></span></div>
-          <div class="enc-row"><span class="enc-key">liquidation_price</span><span class="enc-val"><span id="eLiq">—</span><span class="enc-badge">MXE only</span></span></div>
-          <div class="enc-row"><span class="enc-key">interest_rate</span><span class="enc-val"><span id="eRate">—</span><span class="enc-badge">MXE computed</span></span></div>
-        </div>
-        <button class="action-btn btn-blue-solid" id="borrowBtn" onclick="openPosition()" disabled>Connect Wallet to Borrow</button>
-      </div>
-    </div>
 
-    <!-- Positions table -->
-    <div class="positions-panel">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
-        <span style="font-size:14px;font-weight:600;">Active Positions</span>
-        <span class="tag tag-green">health factors hidden on-chain</span>
+          <!-- Health panel -->
+          <div class="app-panel">
+            <div class="app-panel-header">
+              <span class="app-panel-title">Position Health</span>
+              <span class="tag tag-blue">Live</span>
+            </div>
+            <div class="health-wrap">
+              <div class="ring-wrap">
+                <svg width="68" height="68" viewBox="0 0 68 68">
+                  <circle cx="34" cy="34" r="26" fill="none" stroke="rgba(77,158,255,0.1)" stroke-width="7"/>
+                  <circle cx="34" cy="34" r="26" fill="none" id="healthRing" stroke="#4D9EFF" stroke-width="7" stroke-dasharray="163.4" stroke-dashoffset="163.4" stroke-linecap="round" transform="rotate(-90 34 34)"/>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-num" id="ringNum" style="color:#4D9EFF;">—</div>
+                  <div class="ring-sub">health</div>
+                </div>
+              </div>
+              <div class="health-text">
+                <p>Health factor <strong id="healthStatusText" style="color:var(--text);">not set</strong>. Liquidation below <strong style="color:var(--red);">1.0</strong>. All values encrypted in Arcium MXE — bots see nothing.</p>
+              </div>
+            </div>
+            <div class="enc-table">
+              <div class="enc-row"><span class="enc-key">collateral_value</span><span class="enc-val"><span id="eCol">—</span><span class="enc-badge">encrypted</span></span></div>
+              <div class="enc-row"><span class="enc-key">borrow_balance</span><span class="enc-val"><span id="eBor">—</span><span class="enc-badge">encrypted</span></span></div>
+              <div class="enc-row"><span class="enc-key">liquidation_price</span><span class="enc-val"><span id="eLiq">—</span><span class="enc-badge">MXE only</span></span></div>
+              <div class="enc-row"><span class="enc-key">interest_rate</span><span class="enc-val"><span id="eRate">—</span><span class="enc-badge">MXE computed</span></span></div>
+            </div>
+            <button class="action-btn btn-outline-blue" id="borrowBtn" onclick="openPosition()">Borrow USDC Privately</button>
+          </div>
+        </div>
+
+        <!-- Positions table -->
+        <div class="positions-panel">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+            <span style="font-size:13px;font-weight:600;">Active Positions</span>
+            <span class="tag tag-blue">Health factors hidden on-chain</span>
+          </div>
+          <table class="pos-table">
+            <thead><tr><th>Asset</th><th>Supplied</th><th>Borrowed</th><th>On-chain LTV</th><th>APR</th><th>Status</th><th>TX</th></tr></thead>
+            <tbody id="posBody">
+              <tr><td colspan="7" style="color:var(--text3);font-family:var(--mono);font-size:11px;padding:14px 0;">// No active positions. Enter amounts above and click Supply to open your first private position.</td></tr>
+            </tbody>
+          </table>
+        </div>
       </div>
-      <table class="pos-table">
-        <thead><tr><th>Asset</th><th>Supplied</th><th>Borrowed</th><th>On-chain LTV</th><th>APR</th><th>Status</th><th>TX</th></tr></thead>
-        <tbody id="posBody">
-          <tr><td colspan="7" style="color:var(--text3);font-family:var(--mono);font-size:12px;padding:16px 0;">// Connect wallet and supply collateral to open your first private lending position.</td></tr>
-        </tbody>
-      </table>
     </div>
   </section>
 
   <!-- STATS -->
-  <section id="stats" class="stats">
+  <section id="stats">
+    <span class="section-label">By the Numbers</span>
     <h2>The Scale of the Problem</h2>
     <div class="stats-grid">
       <div class="stat-card fade-in"><div class="stat-number">$50B+</div><div class="stat-label">DeFi Lending Market</div></div>
       <div class="stat-card fade-in"><div class="stat-number">$1.3B+</div><div class="stat-label">Lost to MEV Annually</div></div>
-      <div class="stat-card fade-in"><div class="stat-number">100%</div><div class="stat-label">Of Protocols Expose Positions</div></div>
-      <div class="stat-card fade-in"><div class="stat-number">0</div><div class="stat-label">Protocols Offered Privacy Before</div></div>
+      <div class="stat-card fade-in"><div class="stat-number">100%</div><div class="stat-label">Protocols Expose Positions</div></div>
+      <div class="stat-card fade-in"><div class="stat-number">0</div><div class="stat-label">Offered Privacy Before</div></div>
     </div>
   </section>
 
-  <!-- TECH STACK -->
+  <!-- TECH -->
   <section>
-    <div class="tech-section">
-      <h2>Built on Proven Technology</h2>
+    <div class="card-box">
+      <span class="section-label" style="text-align:left;">Technology</span>
+      <h2 style="text-align:left;margin-bottom:2rem;">Built on Proven Infrastructure</h2>
       <div class="tech-grid">
-        <div class="tech-card fade-in"><div class="tech-icon">⚡</div><h3>Solana</h3><p>Sub-second finality and sub-cent transaction fees. The fastest blockchain for DeFi applications with minimal cost.</p></div>
-        <div class="tech-card fade-in"><div class="tech-icon">🔒</div><h3>Arcium MXE</h3><p>Multi-party Execution Environment for encrypted computation. Cryptographically secure enclave for private calculations.</p></div>
-        <div class="tech-card fade-in"><div class="tech-icon">🛠️</div><h3>Anchor Framework</h3><p>Production-grade Solana program development. Type-safe smart contracts with built-in security best practices.</p></div>
+        <div class="tech-card fade-in"><div class="tech-icon">SOL</div><h3>Solana</h3><p>Sub-second finality and sub-cent fees. The only L1 fast enough for encrypted MPC computation at DeFi scale.</p></div>
+        <div class="tech-card fade-in"><div class="tech-icon">MXE</div><h3>Arcium MXE</h3><p>Multi-party Execution Environment. Encrypted computation across independent nodes — no single node ever sees plaintext.</p></div>
+        <div class="tech-card fade-in"><div class="tech-icon">ANC</div><h3>Anchor Framework</h3><p>Production-grade Solana programs. Type-safe smart contracts with ZK proof verification built in.</p></div>
       </div>
     </div>
   </section>
 
   <!-- CREATOR -->
   <section id="creator">
-    <div class="creator-section fade-in">
+    <div class="creator-box fade-in">
       <div class="creator-avatar">SM</div>
-      <h3 style="color:var(--green-light);margin-bottom:0.5rem;">Shahmeer Murtaza</h3>
-      <div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:1.5rem;">AEROSPACE ENGINEERING STUDENT &amp; WEB3 DEVELOPER</div>
-      <p class="creator-quote">"Privacy is not a DeFi feature. It is a fundamental right."</p>
+      <div class="creator-name">Shahmeer Murtaza</div>
+      <div class="creator-role">Aerospace Engineering Student &amp; Web3 Developer</div>
+      <p class="creator-quote">"Privacy is not a DeFi feature. It is a fundamental right that every user deserves."</p>
       <div class="creator-socials">
-        <a href="https://twitter.com/husnain50376345" target="_blank" class="social-link">𝕏 @husnain50376345</a>
-        <a href="https://discord.com/users/shah0406" target="_blank" class="social-link">💬 shah0406</a>
-        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="social-link">⚙️ GitHub</a>
+        <a href="https://twitter.com/husnain50376345" target="_blank" class="social-link">X  @husnain50376345</a>
+        <a href="https://discord.com/users/shah0406" target="_blank" class="social-link">Discord  shah0406</a>
+        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="social-link">GitHub</a>
       </div>
     </div>
   </section>
 
   <!-- FOOTER -->
   <footer>
-    <div class="footer-content">
+    <div class="footer-grid">
       <div class="footer-col">
         <h4>PrivateLend</h4>
-        <p>Privacy-first lending protocol on Solana powered by Arcium MXE. Protecting DeFi users from MEV and liquidation front-running.</p>
+        <p>Privacy-first lending on Solana powered by Arcium MXE. The first DeFi protocol where liquidation bots are mathematically blind.</p>
       </div>
       <div class="footer-col">
         <h4>Links</h4>
-        <a href="#demo">Live App</a>
+        <a href="#app">Launch App</a>
         <a href="https://github.com/sands786/privatelend-solana" target="_blank">GitHub Repository</a>
         <a href="https://solscan.io" target="_blank">Solana Explorer</a>
       </div>
@@ -531,33 +879,29 @@
         <a href="https://www.anchor-lang.com" target="_blank">Anchor Framework</a>
       </div>
     </div>
-    <div class="footer-bottom">Built for Arcium x Solana Hackathon 2025 | Privacy-First Lending on Solana x Arcium</div>
+    <div class="footer-bottom">Privacy-First Lending on Solana × Arcium</div>
   </footer>
 
 </div>
 
 <script>
-  // ── Solana Web3 ──
   const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl } = solanaWeb3;
   const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
   const SOL_PRICE = 145, MAX_LTV = 0.80, SAFE_LTV = 0.60;
-  let walletPublicKey = null, walletProvider = null, solBalanceLamports = 0, positions = [];
-  let is3DEnabled = true;
+  let walletPublicKey = null, walletProvider = null, solBalanceLamports = 0, positions = [], is3DEnabled = true;
 
   // ── Toast ──
-  function toast(msg, type = 'info', ms = 4000) {
+  function toast(msg, type='info', ms=4000) {
     const t = document.getElementById('toast');
-    t.textContent = msg;
-    t.className = `toast show ${type}`;
-    clearTimeout(t._t);
-    t._t = setTimeout(() => t.className = 'toast', ms);
+    t.textContent = msg; t.className = `toast show ${type}`;
+    clearTimeout(t._t); t._t = setTimeout(() => t.className='toast', ms);
   }
 
   // ── Toggle 3D ──
   document.getElementById('toggle3d').addEventListener('click', function() {
     is3DEnabled = !is3DEnabled;
     document.body.classList.toggle('disable-3d');
-    this.textContent = is3DEnabled ? 'Disable 3D' : 'Enable 3D';
+    this.textContent = is3DEnabled ? 'DISABLE 3D' : 'ENABLE 3D';
     if (is3DEnabled) { initHeroScene(); initFlowDiagram(); }
   });
 
@@ -567,270 +911,292 @@
     setTimeout(() => {
       ['phantom','solflare','backpack'].forEach(w => {
         const el = document.getElementById(`${w}Status`);
-        const detected = (w==='phantom' && window.solana?.isPhantom) || (w==='solflare' && window.solflare?.isSolflare) || (w==='backpack' && !!window.backpack);
-        el.textContent = detected ? 'detected' : 'not installed';
-        el.className = detected ? 'ws-detected' : 'ws-install';
+        const ok = (w==='phantom'&&window.solana?.isPhantom)||(w==='solflare'&&window.solflare?.isSolflare)||(w==='backpack'&&!!window.backpack);
+        el.textContent = ok ? 'detected' : 'not installed';
+        el.className = ok ? 'ws-detected' : 'ws-install';
       });
     }, 100);
     document.getElementById('walletModal').classList.add('open');
   }
   function closeWalletModal() { document.getElementById('walletModal').classList.remove('open'); }
-  document.getElementById('walletModal').addEventListener('click', e => { if (e.target.id === 'walletModal') closeWalletModal(); });
+  document.getElementById('walletModal').addEventListener('click', e => { if (e.target.id==='walletModal') closeWalletModal(); });
 
-  // ── Connect Wallet ──
+  // ── Connect ──
   async function connectWallet(type) {
     closeWalletModal();
-    const providerMap = { phantom: () => window.solana, solflare: () => window.solflare, backpack: () => window.backpack?.solana };
-    const checkMap = { phantom: () => !!(window.solana?.isPhantom), solflare: () => !!(window.solflare?.isSolflare), backpack: () => !!(window.backpack) };
-    const urlMap = { phantom: 'https://phantom.app', solflare: 'https://solflare.com', backpack: 'https://backpack.app' };
-    if (!checkMap[type]()) { toast(`${type} not detected. Opening install page...`, 'error'); setTimeout(() => window.open(urlMap[type], '_blank'), 1000); return; }
-    const provider = providerMap[type]();
-    if (!provider) { toast('Wallet provider not found. Refresh and try again.', 'error'); return; }
+    const pm = { phantom:()=>window.solana, solflare:()=>window.solflare, backpack:()=>window.backpack?.solana };
+    const cm = { phantom:()=>!!(window.solana?.isPhantom), solflare:()=>!!(window.solflare?.isSolflare), backpack:()=>!!(window.backpack) };
+    const um = { phantom:'https://phantom.app', solflare:'https://solflare.com', backpack:'https://backpack.app' };
+    if (!cm[type]()) { toast(`${type} not detected. Opening install page...`, 'error'); setTimeout(()=>window.open(um[type],'_blank'),1000); return; }
+    const provider = pm[type]();
+    if (!provider) { toast('Provider not found. Refresh and try again.','error'); return; }
     try {
-      toast('Waiting for wallet approval...', 'info');
+      toast('Waiting for wallet approval...','info');
       const resp = await provider.connect({ onlyIfTrusted: false });
       walletPublicKey = resp?.publicKey || provider.publicKey;
       if (!walletPublicKey) throw new Error('No public key returned');
       walletProvider = provider;
       onWalletConnected();
-      if (provider.on) {
-        provider.on('disconnect', () => disconnectWallet());
-        provider.on('accountChanged', (pk) => { if (!pk) disconnectWallet(); else { walletPublicKey = pk; fetchBalance(); } });
-      }
-    } catch (err) {
-      toast(err.code === 4001 ? 'Connection rejected.' : `Failed: ${err.message}`, 'error');
+      if (provider.on) { provider.on('disconnect', ()=>disconnectWallet()); }
+    } catch(err) {
+      toast(err.code===4001 ? 'Connection rejected.' : `Failed: ${err.message}`, 'error');
     }
   }
 
   function onWalletConnected() {
     const addr = walletPublicKey.toString();
-    const short = addr.slice(0,4) + '...' + addr.slice(-4);
+    const short = addr.slice(0,4)+'...'+addr.slice(-4);
     document.getElementById('wDot').className = 'w-dot live';
     document.getElementById('wLabel').textContent = short;
     document.getElementById('walletBtn').className = 'wallet-btn connected';
     document.getElementById('walletShort').textContent = short;
     document.getElementById('balanceBar').style.display = 'flex';
     document.getElementById('explorerLink').href = `https://solscan.io/account/${addr}?cluster=devnet`;
-    document.getElementById('supplyBtn').disabled = false;
-    document.getElementById('supplyBtn').textContent = 'Encrypt & Supply Collateral';
-    document.getElementById('borrowBtn').disabled = false;
-    document.getElementById('borrowBtn').textContent = 'Borrow USDC Privately';
+    document.getElementById('connectPrompt').style.display = 'none';
+    document.getElementById('appPanels').style.display = 'block';
     fetchBalance();
-    toast(`Connected: ${short}`, 'success');
+    toast(`Wallet connected: ${short}`, 'success');
   }
 
   async function fetchBalance() {
     if (!walletPublicKey) return;
     try {
       solBalanceLamports = await connection.getBalance(walletPublicKey);
-      document.getElementById('solBalance').textContent = (solBalanceLamports / LAMPORTS_PER_SOL).toFixed(4) + ' SOL';
+      document.getElementById('solBalance').textContent = (solBalanceLamports/LAMPORTS_PER_SOL).toFixed(4)+' SOL';
     } catch { document.getElementById('solBalance').textContent = 'Error'; }
   }
 
   async function requestAirdrop() {
     if (!walletPublicKey) return;
     const btn = document.getElementById('airdropBtn');
-    btn.disabled = true; btn.textContent = 'Requesting...';
-    toast('Requesting 2 SOL from Devnet faucet...', 'info');
+    btn.disabled=true; btn.textContent='Requesting...';
+    toast('Requesting 2 SOL from Devnet faucet...','info');
     try {
-      const sig = await connection.requestAirdrop(walletPublicKey, 2 * LAMPORTS_PER_SOL);
-      await connection.confirmTransaction(sig, 'confirmed');
+      const sig = await connection.requestAirdrop(walletPublicKey, 2*LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(sig,'confirmed');
       await fetchBalance();
-      toast('Airdrop successful! +2 SOL added', 'success');
-    } catch { toast('Airdrop failed — try faucet.solana.com', 'error'); }
-    finally { btn.disabled = false; btn.textContent = '+ Airdrop 2 SOL'; }
+      toast('Airdrop successful! +2 SOL added','success');
+    } catch { toast('Airdrop failed — try faucet.solana.com','error'); }
+    finally { btn.disabled=false; btn.textContent='+ Airdrop 2 SOL'; }
   }
 
   function disconnectWallet() {
     if (walletProvider?.disconnect) walletProvider.disconnect();
-    walletPublicKey = null; walletProvider = null; solBalanceLamports = 0;
-    document.getElementById('wDot').className = 'w-dot';
-    document.getElementById('wLabel').textContent = 'Connect Wallet';
-    document.getElementById('walletBtn').className = 'wallet-btn';
-    document.getElementById('balanceBar').style.display = 'none';
-    document.getElementById('supplyBtn').disabled = true;
-    document.getElementById('supplyBtn').textContent = 'Connect Wallet to Supply';
-    document.getElementById('borrowBtn').disabled = true;
-    document.getElementById('borrowBtn').textContent = 'Connect Wallet to Borrow';
-    toast('Wallet disconnected', 'info');
+    walletPublicKey=null; walletProvider=null; solBalanceLamports=0;
+    document.getElementById('wDot').className='w-dot';
+    document.getElementById('wLabel').textContent='Connect Wallet';
+    document.getElementById('walletBtn').className='wallet-btn';
+    document.getElementById('balanceBar').style.display='none';
+    document.getElementById('connectPrompt').style.display='block';
+    document.getElementById('appPanels').style.display='none';
+    toast('Wallet disconnected','info');
   }
 
   function setMax() {
     if (!walletPublicKey) return;
-    document.getElementById('colInput').value = Math.max(0, (solBalanceLamports / LAMPORTS_PER_SOL) - 0.01).toFixed(4);
+    document.getElementById('colInput').value = Math.max(0,(solBalanceLamports/LAMPORTS_PER_SOL)-0.01).toFixed(4);
     calcApp();
   }
 
-  // ── App Calculations ──
   function calcApp() {
-    const col = parseFloat(document.getElementById('colInput').value) || 0;
-    const bor = parseFloat(document.getElementById('borInput').value) || 0;
-    const colUsd = col * SOL_PRICE;
-    const ltv = colUsd > 0 ? bor / colUsd : 0;
-    const pct = Math.min(ltv * 100, 100);
-    document.getElementById('colUsd').textContent = '$' + colUsd.toFixed(2);
-    document.getElementById('borUsd').textContent = '$' + bor.toFixed(2);
-    document.getElementById('ltvPct').textContent = pct.toFixed(1) + '%';
+    const col = parseFloat(document.getElementById('colInput').value)||0;
+    const bor = parseFloat(document.getElementById('borInput').value)||0;
+    const colUsd = col*SOL_PRICE;
+    const ltv = colUsd>0 ? bor/colUsd : 0;
+    const pct = Math.min(ltv*100,100);
+    document.getElementById('colUsd').textContent = '$'+colUsd.toFixed(2);
+    document.getElementById('borUsd').textContent = '$'+bor.toFixed(2);
+    document.getElementById('ltvPct').textContent = pct.toFixed(1)+'%';
     const fill = document.getElementById('ltvFill');
-    fill.style.width = pct + '%';
-    fill.style.background = ltv < SAFE_LTV ? 'var(--green)' : ltv < MAX_LTV ? 'var(--warn)' : 'var(--danger)';
-    if (col > 0 && bor > 0) {
-      const h = (colUsd * SAFE_LTV) / bor;
-      const hc = h > 1.5 ? 'var(--green)' : h > 1.0 ? 'var(--warn)' : 'var(--danger)';
+    fill.style.width = pct+'%';
+    fill.style.background = ltv<SAFE_LTV ? 'var(--blue)' : ltv<MAX_LTV ? 'var(--amber)' : 'var(--red)';
+    if (col>0 && bor>0) {
+      const h = (colUsd*SAFE_LTV)/bor;
+      const hc = h>1.5 ? 'var(--green)' : h>1.0 ? 'var(--amber)' : 'var(--red)';
       document.getElementById('ringNum').textContent = h.toFixed(2);
       document.getElementById('ringNum').style.color = hc;
-      document.getElementById('healthStatusText').textContent = h > 1.5 ? 'healthy' : h > 1.0 ? 'at risk' : 'critical';
+      document.getElementById('healthStatusText').textContent = h>1.5 ? 'healthy' : h>1.0 ? 'at risk' : 'critical';
       document.getElementById('healthStatusText').style.color = hc;
-      const circ = 169.6;
-      document.getElementById('healthRing').style.strokeDashoffset = (circ - Math.min(h/3,1)*circ).toFixed(1);
-      document.getElementById('healthRing').style.stroke = h > 1.5 ? '#1D9E75' : h > 1.0 ? '#EF9F27' : '#E24B4A';
-      document.getElementById('eCol').textContent = '$' + colUsd.toFixed(2);
-      document.getElementById('eBor').textContent = '$' + bor.toFixed(2);
-      document.getElementById('eLiq').textContent = '$' + (bor / (col * SAFE_LTV)).toFixed(2);
-      document.getElementById('eRate').textContent = ((0.045 + ltv * 0.05) * 100).toFixed(2) + '% APR';
+      const circ=163.4;
+      document.getElementById('healthRing').style.strokeDashoffset = (circ-Math.min(h/3,1)*circ).toFixed(1);
+      document.getElementById('healthRing').style.stroke = h>1.5 ? '#0ECB81' : h>1.0 ? '#F0B90B' : '#F6465D';
+      document.getElementById('eCol').textContent = '$'+colUsd.toFixed(2);
+      document.getElementById('eBor').textContent = '$'+bor.toFixed(2);
+      document.getElementById('eLiq').textContent = '$'+(bor/(col*SAFE_LTV)).toFixed(2);
+      document.getElementById('eRate').textContent = ((0.045+ltv*0.05)*100).toFixed(2)+'% APR';
     } else {
-      document.getElementById('ringNum').textContent = '—';
-      document.getElementById('healthRing').style.strokeDashoffset = '169.6';
-      ['eCol','eBor','eLiq','eRate'].forEach(id => document.getElementById(id).textContent = '—');
+      document.getElementById('ringNum').textContent='—';
+      document.getElementById('healthRing').style.strokeDashoffset='163.4';
+      ['eCol','eBor','eLiq','eRate'].forEach(id=>document.getElementById(id).textContent='—');
     }
   }
 
-  // ── Open Position (real Devnet TX) ──
   async function openPosition() {
-    if (!walletPublicKey) { toast('Connect your wallet first', 'error'); return; }
-    const col = parseFloat(document.getElementById('colInput').value) || 0;
-    const bor = parseFloat(document.getElementById('borInput').value) || 0;
-    if (col <= 0) { toast('Enter a collateral amount', 'error'); return; }
-    if (bor <= 0) { toast('Enter a borrow amount', 'error'); return; }
-    const colUsd = col * SOL_PRICE;
-    const ltv = bor / colUsd;
-    if (ltv > MAX_LTV) { toast('LTV exceeds 80% maximum. Reduce borrow amount.', 'error'); return; }
-    if (Math.floor(col * LAMPORTS_PER_SOL) > solBalanceLamports - 5000) { toast('Insufficient SOL. Click "+ Airdrop 2 SOL" first.', 'error'); return; }
-    const btn = document.getElementById('supplyBtn');
-    btn.disabled = true; btn.textContent = 'Signing transaction...';
-    toast('Preparing Solana Devnet transaction...', 'info');
+    if (!walletPublicKey) { toast('Connect your wallet first','error'); return; }
+    const col = parseFloat(document.getElementById('colInput').value)||0;
+    const bor = parseFloat(document.getElementById('borInput').value)||0;
+    if (col<=0) { toast('Enter a collateral amount','error'); return; }
+    if (bor<=0) { toast('Enter a borrow amount','error'); return; }
+    const colUsd=col*SOL_PRICE, ltv=bor/colUsd;
+    if (ltv>MAX_LTV) { toast('LTV exceeds 80%. Reduce borrow amount.','error'); return; }
+    if (Math.floor(col*LAMPORTS_PER_SOL)>solBalanceLamports-5000) { toast('Insufficient SOL. Click "+ Airdrop 2 SOL" first.','error'); return; }
+    const btn=document.getElementById('supplyBtn');
+    btn.disabled=true; btn.textContent='Signing transaction...';
+    toast('Preparing Solana Devnet transaction...','info');
     try {
       const { blockhash } = await connection.getLatestBlockhash('confirmed');
       const tx = new Transaction({ recentBlockhash: blockhash, feePayer: walletPublicKey });
       tx.add(SystemProgram.transfer({ fromPubkey: walletPublicKey, toPubkey: walletPublicKey, lamports: 1000 }));
-      btn.textContent = 'Approve in wallet...';
+      btn.textContent='Approve in wallet...';
       const signed = await walletProvider.signTransaction(tx);
-      btn.textContent = 'Confirming on-chain...';
-      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, preflightCommitment: 'confirmed' });
-      await connection.confirmTransaction(sig, 'confirmed');
-      const health = (colUsd * SAFE_LTV) / bor;
-      const rate = ((0.045 + ltv * 0.05) * 100).toFixed(2);
-      positions.push({ col, bor, colUsd, health, rate, ltv, sig });
-      renderPositions();
-      updateStats();
-      await fetchBalance();
-      toast(`Position opened on Devnet! TX: ${sig.slice(0,8)}...`, 'success', 6000);
-      document.getElementById('colInput').value = '';
-      document.getElementById('borInput').value = '';
+      btn.textContent='Confirming on-chain...';
+      const sig = await connection.sendRawTransaction(signed.serialize(),{skipPreflight:true,preflightCommitment:'confirmed'});
+      await connection.confirmTransaction(sig,'confirmed');
+      const health=(colUsd*SAFE_LTV)/bor;
+      const rate=((0.045+ltv*0.05)*100).toFixed(2);
+      positions.push({col,bor,colUsd,health,rate,ltv,sig});
+      renderPositions(); await fetchBalance();
+      toast(`Position opened! TX: ${sig.slice(0,8)}...`,'success',6000);
+      document.getElementById('colInput').value='';
+      document.getElementById('borInput').value='';
       calcApp();
-    } catch (err) {
-      toast(`Transaction failed: ${err.message}`, 'error');
-    } finally {
-      btn.disabled = false; btn.textContent = 'Encrypt & Supply Collateral';
-    }
+    } catch(err) { toast(`Transaction failed: ${err.message}`,'error'); }
+    finally { btn.disabled=false; btn.textContent='Encrypt & Supply Collateral'; }
   }
 
   function renderPositions() {
     if (!positions.length) return;
     document.getElementById('posBody').innerHTML = positions.map(p => {
-      const pc = p.health > 1.5 ? 'pill-safe' : p.health > 1.0 ? 'pill-warn' : 'pill-danger';
-      const pt = p.health > 1.5 ? 'Safe' : p.health > 1.0 ? 'Monitor' : 'Critical';
+      const pc=p.health>1.5?'pill-safe':p.health>1.0?'pill-warn':'pill-danger';
+      const pt=p.health>1.5?'Safe':p.health>1.0?'Monitor':'Critical';
       return `<tr>
         <td style="font-family:var(--mono)">SOL/USDC</td>
-        <td style="font-family:var(--mono)">${p.col.toFixed(3)} SOL</td>
-        <td style="font-family:var(--mono)">${p.bor.toFixed(0)} USDC</td>
+        <td style="font-family:var(--mono);color:var(--text)">${p.col.toFixed(3)} SOL</td>
+        <td style="font-family:var(--mono);color:var(--text)">${p.bor.toFixed(0)} USDC</td>
         <td><span class="hidden-dots">●●●●●</span></td>
-        <td style="font-family:var(--mono)">${p.rate}%</td>
+        <td style="font-family:var(--mono);color:var(--text)">${p.rate}%</td>
         <td><span class="status-pill ${pc}">${pt}</span></td>
         <td><a class="tx-link" href="https://explorer.solana.com/tx/${p.sig}?cluster=devnet" target="_blank">view ↗</a></td>
       </tr>`;
     }).join('');
   }
 
-  function updateStats() {
-    // Update live stats in the stats section if needed
-  }
-
   // ── Auto-reconnect ──
   window.addEventListener('load', async () => {
-    await new Promise(r => setTimeout(r, 500));
+    await new Promise(r=>setTimeout(r,500));
     if (window.solana?.isPhantom && window.solana.isConnected && window.solana.publicKey) {
-      walletPublicKey = window.solana.publicKey; walletProvider = window.solana; onWalletConnected();
+      walletPublicKey=window.solana.publicKey; walletProvider=window.solana; onWalletConnected();
     } else if (window.solflare?.isSolflare && window.solflare.isConnected && window.solflare.publicKey) {
-      walletPublicKey = window.solflare.publicKey; walletProvider = window.solflare; onWalletConnected();
+      walletPublicKey=window.solflare.publicKey; walletProvider=window.solflare; onWalletConnected();
     }
+    if (is3DEnabled) setTimeout(()=>{ initHeroScene(); initFlowDiagram(); }, 200);
   });
 
   // ── Three.js Hero ──
   function initHeroScene() {
     const canvas = document.getElementById('heroCanvas');
     if (!canvas || !is3DEnabled) return;
-    const w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
-    const scene = new THREE.Scene();
-    const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
-    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-    renderer.setSize(w, h); renderer.setClearColor(0x000000, 0);
-    camera.position.z = 3;
-    const shield = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.8, 0.3), new THREE.MeshPhongMaterial({ color: 0x1D9E75, emissive: 0x5DCAA5, emissiveIntensity: 0.3 }));
+    const w=canvas.parentElement.clientWidth, h=canvas.parentElement.clientHeight;
+    const scene=new THREE.Scene(), camera=new THREE.PerspectiveCamera(75,w/h,0.1,1000);
+    const renderer=new THREE.WebGLRenderer({canvas,alpha:true,antialias:true});
+    renderer.setSize(w,h); renderer.setClearColor(0xFFFFFF,0); camera.position.z=3;
+    // Shield
+    const shield=new THREE.Mesh(new THREE.BoxGeometry(1.4,1.7,0.25), new THREE.MeshPhongMaterial({color:0x8B5CF6,emissive:0x4C1D95,emissiveIntensity:0.5,wireframe:false}));
     scene.add(shield);
-    const glow = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0x1D9E75, transparent: true, opacity: 0.1, wireframe: true }));
+    // Wireframe sphere
+    const glow=new THREE.Mesh(new THREE.SphereGeometry(2.4,32,32), new THREE.MeshBasicMaterial({color:0x8B5CF6,transparent:true,opacity:0.1,wireframe:true}));
     scene.add(glow);
-    const light = new THREE.PointLight(0x1D9E75, 1, 100); light.position.set(5,5,5); scene.add(light);
-    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
-    const pg = new THREE.BufferGeometry();
-    const pos = new Float32Array(300);
-    for (let i = 0; i < 300; i += 3) { pos[i] = (Math.random()-.5)*10; pos[i+1] = (Math.random()-.5)*10; pos[i+2] = (Math.random()-.5)*10; }
-    pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-    const particles = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0x1D9E75, size: 0.05, transparent: true, opacity: 0.6 }));
+    // Ring
+    const ring=new THREE.Mesh(new THREE.TorusGeometry(1.8,0.02,8,64), new THREE.MeshBasicMaterial({color:0x8B5CF6,transparent:true,opacity:0.5}));
+    scene.add(ring);
+    const ring2=new THREE.Mesh(new THREE.TorusGeometry(2.2,0.015,8,64), new THREE.MeshBasicMaterial({color:0x06B6D4,transparent:true,opacity:0.35}));
+    scene.add(ring2);
+    // Lights
+    const pl=new THREE.PointLight(0x8B5CF6,2,100); pl.position.set(4,4,4); scene.add(pl);
+    scene.add(new THREE.AmbientLight(0xffffff,0.25));
+    // Particles
+    const pg=new THREE.BufferGeometry();
+    const pos=new Float32Array(450);
+    for(let i=0;i<450;i+=3){pos[i]=(Math.random()-.5)*12;pos[i+1]=(Math.random()-.5)*12;pos[i+2]=(Math.random()-.5)*12;}
+    pg.setAttribute('position',new THREE.BufferAttribute(pos,3));
+    const particles=new THREE.Points(pg,new THREE.PointsMaterial({color:0x7C3AED,size:0.05,transparent:true,opacity:0.7}));
     scene.add(particles);
-    (function animate() {
+    (function animate(){
       requestAnimationFrame(animate);
-      shield.rotation.x += 0.003; shield.rotation.y += 0.005; glow.rotation.y += 0.002;
-      const p = pg.attributes.position.array;
-      for (let i = 1; i < p.length; i += 3) { p[i] -= 0.01; if (p[i] < -5) p[i] = 5; }
-      pg.attributes.position.needsUpdate = true;
-      renderer.render(scene, camera);
+      shield.rotation.x+=0.003; shield.rotation.y+=0.005;
+      glow.rotation.y+=0.002; ring.rotation.x+=0.004; ring2.rotation.z+=0.003;
+      const p=pg.attributes.position.array;
+      for(let i=1;i<p.length;i+=3){p[i]-=0.008;if(p[i]<-6)p[i]=6;}
+      pg.attributes.position.needsUpdate=true;
+      renderer.render(scene,camera);
     })();
-    window.addEventListener('resize', () => { camera.aspect = canvas.parentElement.clientWidth/canvas.parentElement.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight); });
+    window.addEventListener('resize',()=>{
+      const nw=canvas.parentElement.clientWidth, nh=canvas.parentElement.clientHeight;
+      camera.aspect=nw/nh; camera.updateProjectionMatrix(); renderer.setSize(nw,nh);
+    });
   }
 
   // ── Flow Diagram ──
   function initFlowDiagram() {
-    const canvas = document.getElementById('flowCanvas');
-    if (!canvas || !is3DEnabled) return;
-    const ctx = canvas.getContext('2d');
-    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
-    const w = canvas.width, h = canvas.height;
-    const steps = [{ label: 'Encrypt', icon: '🔐', x: 0.12, color: '#1D9E75' }, { label: 'MXE', icon: '⚙️', x: 0.37, color: '#5DCAA5' }, { label: 'ZK Proof', icon: '✓', x: 0.62, color: '#378ADD' }, { label: 'Solana', icon: '⛓', x: 0.87, color: '#1D9E75' }];
-    let t = 0;
-    (function draw() {
-      ctx.clearRect(0, 0, w, h);
-      ctx.fillStyle = 'rgba(10,14,12,0.4)'; ctx.fillRect(0, 0, w, h);
-      const cy = h / 2;
-      // line
-      ctx.strokeStyle = 'rgba(29,158,117,0.25)'; ctx.lineWidth = 2;
-      ctx.beginPath(); ctx.moveTo(w*0.12, cy); ctx.lineTo(w*0.88, cy); ctx.stroke();
-      // animated pulse
-      const px = w * 0.12 + (w * 0.76) * ((t % 120) / 120);
-      ctx.fillStyle = '#5DCAA5'; ctx.globalAlpha = 0.8;
-      ctx.beginPath(); ctx.arc(px, cy, 5, 0, Math.PI*2); ctx.fill();
-      ctx.globalAlpha = 1;
-      steps.forEach(s => {
-        const x = w * s.x;
-        ctx.fillStyle = s.color; ctx.globalAlpha = 0.9;
-        ctx.beginPath(); ctx.arc(x, cy, 38, 0, Math.PI*2); ctx.fill();
-        ctx.globalAlpha = 0.2; ctx.strokeStyle = s.color; ctx.lineWidth = 2;
-        ctx.beginPath(); ctx.arc(x, cy, 46 + Math.sin(t*0.05)*4, 0, Math.PI*2); ctx.stroke();
-        ctx.globalAlpha = 1;
-        ctx.fillStyle = '#0a0e0c'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-        ctx.fillText(s.icon, x, cy);
-        ctx.fillStyle = '#e8f0eb'; ctx.font = '12px "IBM Plex Mono"'; ctx.textAlign = 'center';
-        ctx.fillText(s.label, x, cy + 60);
+    const canvas=document.getElementById('flowCanvas');
+    if (!canvas||!is3DEnabled) return;
+    const ctx=canvas.getContext('2d');
+    canvas.width=canvas.offsetWidth; canvas.height=canvas.offsetHeight;
+    const w=canvas.width, h=canvas.height;
+    const steps=[
+      {label:'Encrypt',sub:'AES-256-GCM',x:0.12,color:'#8B5CF6',icon:'ENC'},
+      {label:'Arcium MXE',sub:'Multi-party compute',x:0.37,color:'#10B981',icon:'MXE'},
+      {label:'ZK Proof',sub:'Constraint verified',x:0.62,color:'#06B6D4',icon:'ZKP'},
+      {label:'Solana',sub:'Ciphertext stored',x:0.87,color:'#EC4899',icon:'SOL'}
+    ];
+    let t=0;
+    (function draw(){
+      ctx.clearRect(0,0,w,h);
+      ctx.fillStyle='rgba(244,244,249,0.7)'; ctx.fillRect(0,0,w,h);
+      const cy=h/2;
+      // base line
+      ctx.strokeStyle='rgba(77,158,255,0.15)'; ctx.lineWidth=2;
+      ctx.beginPath(); ctx.moveTo(w*0.12,cy); ctx.lineTo(w*0.88,cy); ctx.stroke();
+      // animated data packet
+      const prog=(t%180)/180;
+      const px=w*0.12+w*0.76*prog;
+      const pc=prog<0.33?'#8B5CF6':prog<0.66?'#06B6D4':'#10B981';
+      ctx.fillStyle=pc; ctx.globalAlpha=0.9;
+      ctx.beginPath(); ctx.arc(px,cy,6,0,Math.PI*2); ctx.fill();
+      // trail
+      ctx.globalAlpha=0.3;
+      for(let i=1;i<=3;i++){
+        const tp=(t-i*8)%180/180;
+        if(tp>0){ctx.beginPath();ctx.arc(w*0.12+w*0.76*Math.max(0,tp),cy,4-i,0,Math.PI*2);ctx.fill();}
+      }
+      ctx.globalAlpha=1;
+      steps.forEach((s,idx)=>{
+        const x=w*s.x;
+        // circle bg
+        ctx.fillStyle=s.color; ctx.globalAlpha=0.12;
+        ctx.beginPath(); ctx.arc(x,cy,44,0,Math.PI*2); ctx.fill();
+        ctx.globalAlpha=1;
+        ctx.fillStyle=s.color; ctx.beginPath(); ctx.arc(x,cy,32,0,Math.PI*2); ctx.fill();
+        // pulse ring
+        const pulse=0.4+0.2*Math.sin(t*0.05+idx*1.5);
+        ctx.globalAlpha=pulse; ctx.strokeStyle=s.color; ctx.lineWidth=1.5;
+        ctx.beginPath(); ctx.arc(x,cy,40+Math.sin(t*0.05)*4,0,Math.PI*2); ctx.stroke();
+        ctx.globalAlpha=1;
+        // icon
+        ctx.fillStyle='#FFFFFF'; ctx.font='bold 11px "IBM Plex Mono"'; ctx.textAlign='center'; ctx.textBaseline='middle';
+        ctx.fillText(s.icon,x,cy);
+        // label
+        ctx.fillStyle='#0F0F1A'; ctx.font='600 13px Inter,sans-serif';
+        ctx.fillText(s.label,x,cy+58);
+        ctx.fillStyle='#8080A0'; ctx.font='11px "IBM Plex Mono"';
+        ctx.fillText(s.sub,x,cy+76);
+        // connector arrow
+        if(idx<steps.length-1){
+          const nx=w*steps[idx+1].x;
+          const mid=(x+nx)/2;
+          ctx.fillStyle='rgba(139,92,246,0.5)'; ctx.font='14px Arial'; ctx.textBaseline='middle';
+          ctx.fillText('>',mid,cy);
+        }
       });
       t++;
       requestAnimationFrame(draw);
@@ -838,22 +1204,17 @@
   }
 
   // ── Scroll Animation ──
-  const observer = new IntersectionObserver(entries => {
-    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
-  }, { threshold: 0.1 });
-  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
+  const observer=new IntersectionObserver(entries=>{
+    entries.forEach(e=>{if(e.isIntersecting){e.target.classList.add('visible');observer.unobserve(e.target);}});
+  },{threshold:0.1});
+  document.querySelectorAll('.fade-in').forEach(el=>observer.observe(el));
 
   // ── Smooth Scroll ──
-  document.querySelectorAll('a[href^="#"]').forEach(a => {
-    a.addEventListener('click', function(e) {
-      const href = this.getAttribute('href');
-      if (href !== '#') { e.preventDefault(); const t = document.querySelector(href); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
+  document.querySelectorAll('a[href^="#"]').forEach(a=>{
+    a.addEventListener('click',function(e){
+      const href=this.getAttribute('href');
+      if(href!=='#'){e.preventDefault();const t=document.querySelector(href);if(t)t.scrollIntoView({behavior:'smooth',block:'start'});}
     });
-  });
-
-  // ── Init ──
-  window.addEventListener('load', () => {
-    if (is3DEnabled) setTimeout(() => { initHeroScene(); initFlowDiagram(); }, 200);
   });
 </script>
 </body>
