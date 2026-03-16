@@ -7,1149 +7,336 @@
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Syne:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <script src="https://unpkg.com/@solana/web3.js@latest/lib/index.iife.min.js"></script>
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
-    
     :root {
-      --bg: #0a0e0c;
-      --surface: #111714;
-      --surface2: #161d19;
-      --border: rgba(29,158,117,0.15);
-      --border2: rgba(29,158,117,0.3);
-      --green: #1D9E75;
-      --green-light: #5DCAA5;
-      --green-dim: rgba(29,158,117,0.1);
-      --blue: #378ADD;
-      --blue-dim: rgba(55,138,221,0.1);
-      --warn: #EF9F27;
-      --warn-dim: rgba(239,159,39,0.1);
-      --danger: #E24B4A;
-      --danger-dim: rgba(226,75,74,0.1);
-      --text: #e8f0eb;
-      --text2: #8fa89a;
-      --text3: #556b61;
-      --mono: 'IBM Plex Mono', monospace;
-      --sans: 'Syne', sans-serif;
+      --bg: #0a0e0c; --surface: #111714; --surface2: #161d19;
+      --border: rgba(29,158,117,0.15); --border2: rgba(29,158,117,0.3);
+      --green: #1D9E75; --green-light: #5DCAA5; --green-dim: rgba(29,158,117,0.1);
+      --blue: #378ADD; --blue-dim: rgba(55,138,221,0.1);
+      --warn: #EF9F27; --warn-dim: rgba(239,159,39,0.1);
+      --danger: #E24B4A; --danger-dim: rgba(226,75,74,0.1);
+      --text: #e8f0eb; --text2: #8fa89a; --text3: #556b61;
+      --mono: 'IBM Plex Mono', monospace; --sans: 'Syne', sans-serif;
     }
-
     html { scroll-behavior: smooth; }
-    
-    body {
-      font-family: var(--sans);
-      background: var(--bg);
-      color: var(--text);
-      min-height: 100vh;
-      overflow-x: hidden;
-    }
+    body { font-family: var(--sans); background: var(--bg); color: var(--text); min-height: 100vh; overflow-x: hidden; }
+    body::before { content: ''; position: fixed; inset: 0; pointer-events: none; z-index: 0; background-image: linear-gradient(rgba(29,158,117,0.03) 1px, transparent 1px), linear-gradient(90deg, rgba(29,158,117,0.03) 1px, transparent 1px); background-size: 40px 40px; }
+    .container { position: relative; z-index: 1; max-width: 1200px; margin: 0 auto; padding: 0 1.5rem; }
+    .toggle-3d { position: fixed; bottom: 2rem; right: 2rem; z-index: 100; padding: 10px 16px; background: var(--surface); border: 1px solid var(--border2); border-radius: 8px; color: var(--text2); font-family: var(--mono); font-size: 11px; cursor: pointer; transition: all 0.3s; }
+    .toggle-3d:hover { border-color: var(--green); color: var(--green); background: var(--green-dim); }
+    header { display: flex; align-items: center; justify-content: space-between; padding: 1.5rem 0; position: sticky; top: 0; background: rgba(10,14,12,0.95); backdrop-filter: blur(10px); z-index: 50; border-bottom: 1px solid var(--border); }
+    .logo { display: flex; align-items: center; gap: 12px; text-decoration: none; color: var(--text); }
+    .logo-mark { width: 40px; height: 40px; background: var(--green); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 20px; color: var(--bg); }
+    .logo-name { font-size: 18px; font-weight: 700; letter-spacing: -0.5px; }
+    .logo-tag { font-family: var(--mono); font-size: 10px; color: var(--green); }
+    nav { display: flex; gap: 2rem; align-items: center; }
+    nav a { font-family: var(--mono); font-size: 12px; color: var(--text2); text-decoration: none; transition: color 0.3s; }
+    nav a:hover { color: var(--green); }
+    .header-right { display: flex; gap: 10px; align-items: center; }
+    .btn { padding: 10px 20px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 13px; font-weight: 600; cursor: pointer; transition: all 0.3s; text-decoration: none; display: inline-flex; align-items: center; justify-content: center; }
+    .btn-primary { background: var(--green); color: var(--bg); }
+    .btn-primary:hover { opacity: 0.88; transform: translateY(-2px); }
+    .btn-secondary { border: 1px solid var(--border2); background: transparent; color: var(--text); }
+    .btn-secondary:hover { border-color: var(--green); background: var(--green-dim); }
+    .wallet-btn { font-family: var(--mono); font-size: 12px; padding: 10px 18px; border: 1px solid var(--border2); border-radius: 8px; background: var(--surface); color: var(--text); cursor: pointer; display: flex; align-items: center; gap: 8px; transition: all 0.2s; white-space: nowrap; }
+    .wallet-btn:hover { border-color: var(--green); background: var(--green-dim); }
+    .wallet-btn.connected { border-color: var(--green); color: var(--green-light); }
+    .w-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--text3); transition: background 0.3s; }
+    .w-dot.live { background: var(--green); box-shadow: 0 0 8px var(--green); }
+    .hero { min-height: 100vh; display: flex; align-items: center; justify-content: center; position: relative; overflow: hidden; padding: 4rem 0; }
+    #heroCanvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; z-index: 0; }
+    .hero-content { position: relative; z-index: 2; text-align: center; max-width: 800px; }
+    .hero h1 { font-size: clamp(2.5rem, 8vw, 4.5rem); font-weight: 700; line-height: 1.2; margin-bottom: 1.5rem; letter-spacing: -1px; animation: fadeInUp 0.8s ease-out; }
+    .hero h1 .highlight { color: var(--green-light); }
+    .hero p { font-size: 1.1rem; color: var(--text2); line-height: 1.8; margin-bottom: 2.5rem; animation: fadeInUp 0.8s ease-out 0.2s backwards; }
+    .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; animation: fadeInUp 0.8s ease-out 0.4s backwards; }
+    @keyframes fadeInUp { from { opacity: 0; transform: translateY(30px); } to { opacity: 1; transform: translateY(0); } }
+    @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+    section { padding: 5rem 0; position: relative; }
+    section h2 { font-size: clamp(2rem, 5vw, 3.5rem); font-weight: 700; margin-bottom: 3rem; text-align: center; letter-spacing: -0.5px; }
+
+    /* Problem */
+    .problem { background: linear-gradient(180deg, rgba(226,75,74,0.05) 0%, transparent 100%); }
+    .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 2rem; }
+    .problem-card { background: var(--surface); border: 1px solid rgba(226,75,74,0.3); border-radius: 12px; padding: 2rem; transition: all 0.3s; position: relative; overflow: hidden; }
+    .problem-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--danger), transparent); }
+    .problem-card:hover { border-color: var(--danger); transform: translateY(-8px); box-shadow: 0 12px 40px rgba(226,75,74,0.2); }
+    .problem-number { font-family: var(--mono); font-size: 2.5rem; font-weight: 700; color: var(--danger); margin-bottom: 1rem; opacity: 0.3; }
+    .problem-card h3 { color: var(--danger); margin-bottom: 1rem; font-size: 1.1rem; }
+    .problem-card p { color: var(--text2); line-height: 1.7; font-size: 0.95rem; }
+
+    /* Solution */
+    .solution { background: linear-gradient(180deg, rgba(29,158,117,0.05) 0%, transparent 100%); }
+    .solution-flow-container { margin-bottom: 3rem; min-height: 400px; }
+    #flowCanvas { width: 100%; height: 400px; border: 1px solid var(--border); border-radius: 16px; background: var(--surface); display: block; }
+
+    /* How it works */
+    .how-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; margin-bottom: 3rem; }
+    .how-steps { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; margin-bottom: 3rem; }
+    .step-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; transition: all 0.3s; cursor: pointer; }
+    .step-card:hover { border-color: var(--green); background: rgba(29,158,117,0.08); transform: translateY(-6px); }
+    .step-number { display: inline-flex; align-items: center; justify-content: center; width: 40px; height: 40px; background: var(--green); border-radius: 50%; color: var(--bg); font-weight: 700; margin-bottom: 1rem; font-size: 18px; }
+    .step-card h3 { color: var(--green-light); margin-bottom: 1rem; font-size: 1.1rem; }
+    .step-card p { color: var(--text2); font-size: 0.95rem; line-height: 1.6; }
+    .comparison-table { width: 100%; border-collapse: collapse; margin-top: 2rem; }
+    .comparison-table th, .comparison-table td { padding: 1.2rem; text-align: left; border-bottom: 1px solid var(--border); }
+    .comparison-table th { background: var(--surface); font-weight: 600; color: var(--green-light); font-family: var(--mono); font-size: 12px; text-transform: uppercase; }
+    .comparison-table tr:hover { background: rgba(29,158,117,0.05); }
+    .comparison-table .feature { color: var(--text2); font-family: var(--mono); font-size: 13px; }
+    .comparison-table .check { color: var(--green); font-weight: 700; font-size: 18px; }
+    .comparison-table .cross { color: var(--danger); font-weight: 700; font-size: 18px; }
+
+    /* Stats */
+    .stats { background: linear-gradient(180deg, rgba(29,158,117,0.08) 0%, transparent 100%); }
+    .stats-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; }
+    .stat-card { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 2.5rem 2rem; text-align: center; transition: all 0.3s; }
+    .stat-card:hover { border-color: var(--green); transform: translateY(-8px); box-shadow: 0 12px 40px rgba(29,158,117,0.15); }
+    .stat-number { font-size: 2.8rem; font-weight: 700; color: var(--green-light); margin-bottom: 0.5rem; font-family: var(--mono); }
+    .stat-label { font-family: var(--mono); font-size: 12px; color: var(--text3); text-transform: uppercase; letter-spacing: 1px; }
+
+    /* Tech */
+    .tech-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; }
+    .tech-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 2rem; }
+    .tech-card { background: var(--surface2); border: 1px solid var(--border); border-radius: 12px; padding: 2rem; text-align: center; transition: all 0.3s; }
+    .tech-card:hover { border-color: var(--green); background: rgba(29,158,117,0.08); transform: translateY(-8px); }
+    .tech-icon { width: 60px; height: 60px; background: var(--green-dim); border: 1px solid var(--border2); border-radius: 12px; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 28px; }
+    .tech-card h3 { color: var(--green-light); margin-bottom: 0.5rem; }
+    .tech-card p { color: var(--text2); font-size: 0.9rem; line-height: 1.6; }
+
+    /* Demo section — THE REAL APP */
+    .demo-section { background: linear-gradient(135deg, rgba(29,158,117,0.1) 0%, rgba(55,138,221,0.05) 100%); border: 1px solid var(--border); border-radius: 16px; padding: 3rem 2rem; }
+    .demo-section h2 { margin-bottom: 1rem; }
+    .demo-section > p { font-size: 1rem; color: var(--text2); line-height: 1.8; max-width: 600px; margin: 0 auto 2rem; text-align: center; }
+
+    /* Balance bar */
+    .balance-bar { display: flex; gap: 10px; margin-bottom: 1.5rem; flex-wrap: wrap; }
+    .bal-card { background: var(--surface); border: 1px solid var(--border); border-radius: 10px; padding: 12px 16px; display: flex; align-items: center; gap: 10px; flex: 1; min-width: 150px; }
+    .bal-icon { width: 30px; height: 30px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 15px; background: var(--surface2); flex-shrink: 0; }
+    .bal-label { font-family: var(--mono); font-size: 10px; color: var(--text3); }
+    .bal-value { font-size: 15px; font-weight: 600; }
+    .airdrop-btn { font-family: var(--mono); font-size: 11px; padding: 6px 12px; border: 1px solid var(--border2); border-radius: 6px; background: transparent; color: var(--green-light); cursor: pointer; transition: all 0.2s; white-space: nowrap; }
+    .airdrop-btn:hover:not(:disabled) { background: var(--green-dim); }
+    .airdrop-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+    /* App panels */
+    .app-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 1.5rem; }
+    .app-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; }
+    .app-panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.2rem; }
+    .app-panel-title { font-size: 14px; font-weight: 600; }
+    .tag { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
+    .tag-green { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
+    .tag-blue { background: var(--blue-dim); color: var(--blue); border: 1px solid rgba(55,138,221,0.2); }
+    .form-group { margin-bottom: 1rem; }
+    .form-label { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .form-label .usd { color: var(--green-light); }
+    .input-row { position: relative; }
+    .form-input { width: 100%; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; padding: 10px 52px 10px 14px; font-family: var(--mono); font-size: 14px; color: var(--text); transition: border-color 0.2s; }
+    .form-input:focus { outline: none; border-color: var(--green); }
+    .form-input::placeholder { color: var(--text3); }
+    .input-tag { position: absolute; right: 12px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 11px; color: var(--text3); }
+    .max-btn { position: absolute; right: 44px; top: 50%; transform: translateY(-50%); font-family: var(--mono); font-size: 9px; color: var(--green); cursor: pointer; padding: 2px 5px; border: 1px solid var(--border); border-radius: 4px; background: var(--green-dim); }
+    .ltv-section { margin-bottom: 1.2rem; }
+    .ltv-header { font-family: var(--mono); font-size: 11px; color: var(--text3); display: flex; justify-content: space-between; margin-bottom: 6px; }
+    .ltv-track { height: 6px; background: var(--surface2); border-radius: 3px; overflow: hidden; }
+    .ltv-fill { height: 100%; border-radius: 3px; transition: width 0.3s, background 0.3s; }
+    .ltv-marks { display: flex; justify-content: space-between; font-family: var(--mono); font-size: 9px; color: var(--text3); margin-top: 4px; }
+    .action-btn { width: 100%; padding: 12px; border-radius: 8px; border: none; font-family: var(--sans); font-size: 14px; font-weight: 600; cursor: pointer; transition: all 0.15s; }
+    .action-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-green-solid { background: var(--green); color: var(--bg); }
+    .btn-green-solid:hover:not(:disabled) { opacity: 0.88; }
+    .btn-blue-solid { background: var(--blue); color: white; }
+    .btn-blue-solid:hover:not(:disabled) { opacity: 0.88; }
+    .health-wrap { display: flex; gap: 14px; align-items: center; margin-bottom: 1.2rem; }
+    .ring-wrap { position: relative; flex-shrink: 0; }
+    .ring-center { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); text-align: center; }
+    .ring-num { font-size: 16px; font-weight: 600; }
+    .ring-sub { font-family: var(--mono); font-size: 9px; color: var(--text3); }
+    .health-text p { font-size: 12px; color: var(--text2); line-height: 1.6; }
+    .enc-table { width: 100%; margin-bottom: 1.2rem; }
+    .enc-row { display: flex; justify-content: space-between; align-items: center; padding: 7px 0; border-bottom: 1px solid var(--border); }
+    .enc-row:last-child { border-bottom: none; }
+    .enc-key { font-family: var(--mono); font-size: 11px; color: var(--text3); }
+    .enc-val { display: flex; align-items: center; gap: 7px; font-family: var(--mono); font-size: 12px; color: var(--text); }
+    .enc-badge { font-size: 9px; color: var(--green); background: var(--green-dim); border: 1px solid var(--border); padding: 1px 6px; border-radius: 10px; }
+    .positions-panel { background: var(--surface); border: 1px solid var(--border); border-radius: 12px; padding: 1.4rem; margin-bottom: 1rem; }
+    .pos-table { width: 100%; border-collapse: collapse; font-size: 12px; }
+    .pos-table th { font-family: var(--mono); font-size: 10px; color: var(--text3); text-transform: uppercase; text-align: left; padding: 0 10px 10px 0; border-bottom: 1px solid var(--border); font-weight: 400; }
+    .pos-table td { padding: 11px 10px 11px 0; border-bottom: 1px solid var(--border); color: var(--text); vertical-align: middle; }
+    .pos-table tr:last-child td { border-bottom: none; }
+    .hidden-dots { font-family: var(--mono); font-size: 12px; color: var(--text3); letter-spacing: 2px; }
+    .status-pill { font-family: var(--mono); font-size: 10px; padding: 3px 9px; border-radius: 20px; }
+    .pill-safe { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); }
+    .pill-warn { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); }
+    .pill-danger { background: var(--danger-dim); color: var(--danger); border: 1px solid rgba(226,75,74,0.2); }
+    .tx-link { font-family: var(--mono); font-size: 11px; color: var(--blue); text-decoration: none; }
+    .tx-link:hover { text-decoration: underline; }
+
+    /* Wallet modal */
+    .modal-overlay { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.75); z-index: 200; align-items: center; justify-content: center; }
+    .modal-overlay.open { display: flex; }
+    .modal { background: var(--surface); border: 1px solid var(--border2); border-radius: 16px; padding: 1.5rem; width: 340px; max-width: 90vw; }
+    .modal-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+    .modal-sub { font-size: 11px; color: var(--text3); margin-bottom: 1.25rem; font-family: var(--mono); }
+    .wallet-option { display: flex; align-items: center; gap: 14px; padding: 14px; border: 1px solid var(--border); border-radius: 10px; cursor: pointer; margin-bottom: 8px; transition: all 0.2s; background: var(--surface2); }
+    .wallet-option:hover { border-color: var(--green); background: var(--green-dim); }
+    .wallet-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; font-size: 18px; flex-shrink: 0; }
+    .wallet-name { font-size: 14px; font-weight: 500; }
+    .wallet-desc { font-size: 11px; color: var(--text3); font-family: var(--mono); margin-top: 2px; }
+    .ws-detected { background: var(--green-dim); color: var(--green-light); border: 1px solid var(--border); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
+    .ws-install { background: var(--warn-dim); color: var(--warn); border: 1px solid rgba(239,159,39,0.2); font-size: 10px; font-family: var(--mono); padding: 2px 8px; border-radius: 10px; }
+    .modal-close { width: 100%; padding: 10px; background: transparent; border: 1px solid var(--border); border-radius: 8px; color: var(--text2); font-family: var(--mono); font-size: 12px; cursor: pointer; margin-top: 4px; }
+    .modal-close:hover { background: var(--surface2); }
+
+    /* Toast */
+    .toast { position: fixed; bottom: 5rem; right: 2rem; background: var(--surface); border: 1px solid var(--border2); border-radius: 10px; padding: 14px 18px; font-family: var(--mono); font-size: 12px; color: var(--text); z-index: 300; max-width: 320px; line-height: 1.5; transform: translateY(80px); opacity: 0; transition: all 0.3s; }
+    .toast.show { transform: translateY(0); opacity: 1; }
+    .toast.success { border-color: var(--green); color: var(--green-light); }
+    .toast.error { border-color: var(--danger); color: #f09595; }
+    .toast.info { border-color: var(--blue); color: var(--blue); }
+
+    /* Creator */
+    .creator-section { background: var(--surface); border: 1px solid var(--border); border-radius: 16px; padding: 3rem; text-align: center; max-width: 500px; margin: 0 auto; }
+    .creator-avatar { width: 100px; height: 100px; background: var(--green); border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 1.5rem; font-size: 36px; font-weight: 700; color: var(--bg); }
+    .creator-quote { font-size: 1rem; color: var(--text2); font-style: italic; line-height: 1.8; margin-bottom: 2rem; border-left: 3px solid var(--green); padding-left: 1.5rem; text-align: left; }
+    .creator-socials { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+    .social-link { display: inline-flex; align-items: center; gap: 6px; padding: 10px 16px; background: var(--surface2); border: 1px solid var(--border); border-radius: 8px; color: var(--text); text-decoration: none; font-family: var(--mono); font-size: 12px; transition: all 0.3s; }
+    .social-link:hover { border-color: var(--green); background: var(--green-dim); color: var(--green-light); }
+
+    /* Footer */
+    footer { border-top: 1px solid var(--border); padding: 3rem 0; margin-top: 5rem; }
+    .footer-content { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 2rem; margin-bottom: 2rem; }
+    .footer-col h4 { color: var(--green-light); margin-bottom: 1rem; font-size: 0.95rem; }
+    .footer-col a { display: block; color: var(--text2); text-decoration: none; font-size: 0.9rem; margin-bottom: 0.75rem; transition: color 0.3s; font-family: var(--mono); }
+    .footer-col a:hover { color: var(--green); }
+    .footer-col p { color: var(--text2); font-size: 0.9rem; line-height: 1.6; }
+    .footer-bottom { border-top: 1px solid var(--border); padding-top: 2rem; text-align: center; color: var(--text3); font-family: var(--mono); font-size: 12px; }
+
+    /* Net badge */
+    .net-badge { font-family: var(--mono); font-size: 11px; padding: 8px 14px; border-radius: 8px; background: var(--surface); border: 1px solid var(--border); color: var(--blue); display: flex; align-items: center; gap: 6px; }
+    .net-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--blue); animation: pulse 2s infinite; }
+
+    .fade-in { opacity: 0; transform: translateY(30px); transition: opacity 0.6s ease-out, transform 0.6s ease-out; }
+    .fade-in.visible { opacity: 1; transform: translateY(0); }
 
-    body::before {
-      content: '';
-      position: fixed;
-      inset: 0;
-      pointer-events: none;
-      z-index: 0;
-      background-image: 
-        linear-gradient(rgba(29,158,117,0.03) 1px, transparent 1px),
-        linear-gradient(90deg, rgba(29,158,117,0.03) 1px, transparent 1px);
-      background-size: 40px 40px;
-    }
-
-    .container {
-      position: relative;
-      z-index: 1;
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1.5rem;
-    }
-
-    /* ─── 3D Toggle Button ─── */
-    .toggle-3d {
-      position: fixed;
-      bottom: 2rem;
-      right: 2rem;
-      z-index: 100;
-      padding: 10px 16px;
-      background: var(--surface);
-      border: 1px solid var(--border2);
-      border-radius: 8px;
-      color: var(--text2);
-      font-family: var(--mono);
-      font-size: 11px;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .toggle-3d:hover {
-      border-color: var(--green);
-      color: var(--green);
-      background: var(--green-dim);
-    }
-
-    /* ─── Header ─── */
-    header {
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      padding: 1.5rem 0;
-      position: sticky;
-      top: 0;
-      background: rgba(10, 14, 12, 0.95);
-      backdrop-filter: blur(10px);
-      z-index: 50;
-      border-bottom: 1px solid var(--border);
-      margin-bottom: 0;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      text-decoration: none;
-      color: var(--text);
-    }
-
-    .logo-mark {
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--green), var(--green-light));
-      border-radius: 10px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      font-weight: 700;
-      font-size: 20px;
-      color: var(--bg);
-    }
-
-    .logo-text {
-      display: flex;
-      flex-direction: column;
-      gap: 2px;
-    }
-
-    .logo-name {
-      font-size: 18px;
-      font-weight: 700;
-      letter-spacing: -0.5px;
-    }
-
-    .logo-tag {
-      font-family: var(--mono);
-      font-size: 10px;
-      color: var(--green);
-      opacity: 0.8;
-    }
-
-    nav {
-      display: flex;
-      gap: 2rem;
-      align-items: center;
-    }
-
-    nav a {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text2);
-      text-decoration: none;
-      transition: color 0.3s;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    nav a:hover {
-      color: var(--green);
-    }
-
-    .cta-header {
-      display: flex;
-      gap: 10px;
-    }
-
-    .btn {
-      padding: 10px 20px;
-      border-radius: 8px;
-      border: none;
-      font-family: var(--sans);
-      font-size: 13px;
-      font-weight: 600;
-      cursor: pointer;
-      transition: all 0.3s;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      letter-spacing: 0.3px;
-    }
-
-    .btn-primary {
-      background: var(--green);
-      color: var(--bg);
-    }
-
-    .btn-primary:hover {
-      opacity: 0.88;
-      transform: translateY(-2px);
-      box-shadow: 0 8px 24px rgba(29, 158, 117, 0.3);
-    }
-
-    .btn-secondary {
-      border: 1px solid var(--border2);
-      background: transparent;
-      color: var(--text);
-    }
-
-    .btn-secondary:hover {
-      border-color: var(--green);
-      background: var(--green-dim);
-    }
-
-    /* ─── Hero Section ─── */
-    .hero {
-      min-height: 100vh;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-      padding: 4rem 0;
-    }
-
-    #heroCanvas {
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 100%;
-      z-index: 0;
-    }
-
-    .hero-content {
-      position: relative;
-      z-index: 2;
-      text-align: center;
-      max-width: 800px;
-    }
-
-    .hero h1 {
-      font-size: clamp(2.5rem, 8vw, 4.5rem);
-      font-weight: 700;
-      line-height: 1.2;
-      margin-bottom: 1.5rem;
-      letter-spacing: -1px;
-      animation: fadeInUp 0.8s ease-out;
-    }
-
-    .hero h1 .highlight {
-      background: linear-gradient(135deg, var(--green), var(--green-light));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      background-clip: text;
-    }
-
-    .hero p {
-      font-size: 1.1rem;
-      color: var(--text2);
-      line-height: 1.8;
-      margin-bottom: 2.5rem;
-      animation: fadeInUp 0.8s ease-out 0.2s backwards;
-    }
-
-    .hero-cta {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      animation: fadeInUp 0.8s ease-out 0.4s backwards;
-    }
-
-    @keyframes fadeInUp {
-      from {
-        opacity: 0;
-        transform: translateY(30px);
-      }
-      to {
-        opacity: 1;
-        transform: translateY(0);
-      }
-    }
-
-    /* ─── Section Styles ─── */
-    section {
-      padding: 5rem 0;
-      position: relative;
-    }
-
-    section h2 {
-      font-size: clamp(2rem, 5vw, 3.5rem);
-      font-weight: 700;
-      margin-bottom: 3rem;
-      text-align: center;
-      letter-spacing: -0.5px;
-    }
-
-    section h3 {
-      font-size: 1.3rem;
-      font-weight: 600;
-      margin-bottom: 1rem;
-    }
-
-    /* ─── Problem Section ─── */
-    .problem {
-      background: linear-gradient(180deg, rgba(226, 75, 74, 0.05) 0%, transparent 100%);
-    }
-
-    .problem-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-    }
-
-    .problem-card {
-      background: var(--surface);
-      border: 1px solid rgba(226, 75, 74, 0.3);
-      border-radius: 12px;
-      padding: 2rem;
-      transition: all 0.3s;
-      position: relative;
-      overflow: hidden;
-      perspective: 1000px;
-    }
-
-    .problem-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      right: 0;
-      height: 3px;
-      background: linear-gradient(90deg, var(--danger), transparent);
-    }
-
-    .problem-card:hover {
-      border-color: var(--danger);
-      transform: translateY(-8px) rotateX(5deg);
-      box-shadow: 0 12px 40px rgba(226, 75, 74, 0.2);
-    }
-
-    .problem-number {
-      font-family: var(--mono);
-      font-size: 2.5rem;
-      font-weight: 700;
-      color: var(--danger);
-      margin-bottom: 1rem;
-      opacity: 0.3;
-    }
-
-    .problem-card h3 {
-      color: var(--danger);
-      margin-bottom: 1rem;
-    }
-
-    .problem-card p {
-      color: var(--text2);
-      line-height: 1.7;
-      font-size: 0.95rem;
-    }
-
-    /* ─── Solution Section ─── */
-    .solution {
-      background: linear-gradient(180deg, rgba(29, 158, 117, 0.05) 0%, transparent 100%);
-    }
-
-    .solution-flow-container {
-      margin-bottom: 3rem;
-      position: relative;
-      min-height: 600px;
-    }
-
-    #flowCanvas {
-      width: 100%;
-      height: 600px;
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      background: var(--surface);
-      display: block;
-    }
-
-    /* ─── How It Works Section ─── */
-    .how-it-works {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 3rem;
-      margin-bottom: 3rem;
-    }
-
-    .how-steps {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-      margin-bottom: 3rem;
-    }
-
-    .step-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      transition: all 0.3s;
-      perspective: 1000px;
-      transform-style: preserve-3d;
-      cursor: pointer;
-      min-height: 300px;
-      position: relative;
-    }
-
-    .step-card:hover {
-      border-color: var(--green);
-      background: rgba(29, 158, 117, 0.08);
-      transform: rotateY(5deg) translateZ(20px);
-    }
-
-    .step-number {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      background: linear-gradient(135deg, var(--green), var(--green-light));
-      border-radius: 50%;
-      color: var(--bg);
-      font-weight: 700;
-      margin-bottom: 1rem;
-      font-size: 18px;
-    }
-
-    .step-card h3 {
-      color: var(--green-light);
-      margin-bottom: 1rem;
-    }
-
-    .step-card p {
-      color: var(--text2);
-      font-size: 0.95rem;
-      line-height: 1.6;
-    }
-
-    /* ─── Comparison Table ─── */
-    .comparison-table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 2rem;
-    }
-
-    .comparison-table th,
-    .comparison-table td {
-      padding: 1.2rem;
-      text-align: left;
-      border-bottom: 1px solid var(--border);
-    }
-
-    .comparison-table th {
-      background: var(--surface);
-      font-weight: 600;
-      color: var(--green-light);
-      font-family: var(--mono);
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-    }
-
-    .comparison-table tr:hover {
-      background: rgba(29, 158, 117, 0.05);
-    }
-
-    .comparison-table .feature {
-      color: var(--text2);
-      font-family: var(--mono);
-      font-size: 13px;
-    }
-
-    .comparison-table .check {
-      color: var(--green);
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    .comparison-table .cross {
-      color: var(--danger);
-      font-weight: 700;
-      font-size: 18px;
-    }
-
-    /* ─── Stats Section ─── */
-    .stats {
-      background: linear-gradient(180deg, rgba(29, 158, 117, 0.08) 0%, transparent 100%);
-    }
-
-    .stats-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-    }
-
-    .stat-card {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2.5rem 2rem;
-      text-align: center;
-      transition: all 0.3s;
-    }
-
-    .stat-card:hover {
-      border-color: var(--green);
-      transform: translateY(-8px);
-      box-shadow: 0 12px 40px rgba(29, 158, 117, 0.15);
-    }
-
-    .stat-number {
-      font-size: 2.8rem;
-      font-weight: 700;
-      color: var(--green-light);
-      margin-bottom: 0.5rem;
-      font-family: var(--mono);
-    }
-
-    .stat-label {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-    }
-
-    /* ─── Tech Stack Section ─── */
-    .tech-stack {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 3rem;
-    }
-
-    .tech-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-      gap: 2rem;
-    }
-
-    .tech-card {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      text-align: center;
-      transition: all 0.3s;
-    }
-
-    .tech-card:hover {
-      border-color: var(--green);
-      background: rgba(29, 158, 117, 0.08);
-      transform: translateY(-8px);
-    }
-
-    .tech-icon {
-      width: 60px;
-      height: 60px;
-      background: linear-gradient(135deg, var(--blue), var(--green));
-      border-radius: 12px;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.5rem;
-      font-size: 28px;
-    }
-
-    .tech-card h3 {
-      color: var(--green-light);
-      margin-bottom: 0.5rem;
-    }
-
-    .tech-card p {
-      color: var(--text2);
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-
-    /* ─── Live Demo Section ─── */
-    .live-demo {
-      background: linear-gradient(135deg, rgba(29, 158, 117, 0.1) 0%, rgba(55, 138, 221, 0.05) 100%);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 4rem 2rem;
-    }
-
-    .live-demo h2 {
-      margin-bottom: 1.5rem;
-    }
-
-    .live-demo p {
-      font-size: 1.05rem;
-      color: var(--text2);
-      line-height: 1.8;
-      max-width: 600px;
-      margin: 0 auto 2rem;
-    }
-
-    .simulator-container {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 12px;
-      padding: 2rem;
-      margin: 2rem 0;
-      max-width: 800px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .simulator-title {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--green);
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      margin-bottom: 1.5rem;
-    }
-
-    .sim-input-group {
-      display: grid;
-      grid-template-columns: 1fr 1fr;
-      gap: 1.5rem;
-      margin-bottom: 2rem;
-    }
-
-    .sim-input {
-      display: flex;
-      flex-direction: column;
-    }
-
-    .sim-label {
-      font-family: var(--mono);
-      font-size: 11px;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 0.5rem;
-    }
-
-    .sim-input input {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 10px 12px;
-      font-family: var(--mono);
-      font-size: 14px;
-      color: var(--text);
-      transition: border-color 0.3s;
-    }
-
-    .sim-input input:focus {
-      outline: none;
-      border-color: var(--green);
-    }
-
-    .sim-output {
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      padding: 1.5rem;
-      margin-top: 1.5rem;
-    }
-
-    .sim-output-row {
-      display: flex;
-      justify-content: space-between;
-      padding: 0.75rem 0;
-      border-bottom: 1px solid var(--border);
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-
-    .sim-output-row:last-child {
-      border-bottom: none;
-    }
-
-    .sim-output-label {
-      color: var(--text3);
-    }
-
-    .sim-output-value {
-      color: var(--green-light);
-      font-weight: 600;
-    }
-
-    .sim-visualization {
-      width: 100%;
-      height: 300px;
-      background: linear-gradient(135deg, rgba(29, 158, 117, 0.1), rgba(55, 138, 221, 0.1));
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      margin-top: 1.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      position: relative;
-      overflow: hidden;
-    }
-
-    #simulationCanvas {
-      width: 100%;
-      height: 100%;
-    }
-
-    /* ─── Demo Launch Container ─── */
-    .demo-launch-container {
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      gap: 2rem;
-      margin: 3rem 0;
-    }
-
-    .btn-launch {
-      padding: 18px 48px;
-      font-size: 18px;
-      font-weight: 700;
-      background: linear-gradient(135deg, var(--green), var(--green-light));
-      color: var(--bg);
-      border: none;
-      border-radius: 12px;
-      cursor: pointer;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s;
-      box-shadow: 0 20px 60px rgba(29, 158, 117, 0.4);
-      letter-spacing: 0.5px;
-    }
-
-    .btn-launch:hover {
-      transform: translateY(-4px);
-      box-shadow: 0 30px 80px rgba(29, 158, 117, 0.6);
-    }
-
-    /* ─── Trust Badges ─── */
-    .trust-badges {
-      display: flex;
-      gap: 2rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      width: 100%;
-    }
-
-    .trust-badge {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      padding: 12px 20px;
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 10px;
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text2);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      transition: all 0.3s;
-    }
-
-    .trust-badge:hover {
-      border-color: var(--green);
-      background: var(--green-dim);
-      color: var(--green-light);
-    }
-
-    .badge-icon {
-      font-size: 16px;
-    }
-
-    /* ─── App Mockup ─── */
-    .app-mockup {
-      width: 100%;
-      max-width: 1000px;
-      margin: 2rem auto;
-    }
-
-    .mockup-frame {
-      width: 100%;
-      height: auto;
-      filter: drop-shadow(0 20px 60px rgba(29, 158, 117, 0.2));
-      animation: float 3s ease-in-out infinite;
-    }
-
-    .mockup-caption {
-      text-align: center;
-      color: var(--text2);
-      font-size: 0.95rem;
-      line-height: 1.7;
-      margin-top: 2rem;
-      max-width: 700px;
-      margin-left: auto;
-      margin-right: auto;
-    }
-
-    .demo-cta {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-      margin-top: 2rem;
-    }
-
-    /* ─── Creator Section ─── */
-    .creator {
-      background: var(--surface);
-      border: 1px solid var(--border);
-      border-radius: 16px;
-      padding: 3rem;
-      text-align: center;
-      max-width: 500px;
-      margin: 0 auto;
-    }
-
-    .creator-avatar {
-      width: 100px;
-      height: 100px;
-      background: linear-gradient(135deg, var(--green), var(--blue));
-      border-radius: 50%;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      margin: 0 auto 1.5rem;
-      font-size: 48px;
-      font-weight: 700;
-      color: var(--bg);
-    }
-
-    .creator h3 {
-      color: var(--green-light);
-      margin-bottom: 0.5rem;
-    }
-
-    .creator-role {
-      font-family: var(--mono);
-      font-size: 12px;
-      color: var(--text3);
-      text-transform: uppercase;
-      letter-spacing: 0.5px;
-      margin-bottom: 1.5rem;
-    }
-
-    .creator-quote {
-      font-size: 1rem;
-      color: var(--text2);
-      font-style: italic;
-      line-height: 1.8;
-      margin-bottom: 2rem;
-      border-left: 3px solid var(--green);
-      padding-left: 1.5rem;
-    }
-
-    .creator-socials {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      flex-wrap: wrap;
-    }
-
-    .social-link {
-      display: inline-flex;
-      align-items: center;
-      gap: 6px;
-      padding: 10px 16px;
-      background: var(--surface2);
-      border: 1px solid var(--border);
-      border-radius: 8px;
-      color: var(--text);
-      text-decoration: none;
-      font-family: var(--mono);
-      font-size: 12px;
-      transition: all 0.3s;
-    }
-
-    .social-link:hover {
-      border-color: var(--green);
-      background: var(--green-dim);
-      color: var(--green-light);
-    }
-
-    /* ─── Footer ─── */
-    footer {
-      border-top: 1px solid var(--border);
-      padding: 3rem 0;
-      margin-top: 5rem;
-    }
-
-    .footer-content {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
-      gap: 2rem;
-      margin-bottom: 2rem;
-    }
-
-    .footer-col h4 {
-      color: var(--green-light);
-      margin-bottom: 1rem;
-      font-size: 0.95rem;
-    }
-
-    .footer-col a {
-      display: block;
-      color: var(--text2);
-      text-decoration: none;
-      font-size: 0.9rem;
-      margin-bottom: 0.75rem;
-      transition: color 0.3s;
-      font-family: var(--mono);
-    }
-
-    .footer-col a:hover {
-      color: var(--green);
-    }
-
-    .footer-col p {
-      color: var(--text2);
-      font-size: 0.9rem;
-      line-height: 1.6;
-    }
-
-    .footer-bottom {
-      border-top: 1px solid var(--border);
-      padding-top: 2rem;
-      text-align: center;
-      color: var(--text3);
-      font-family: var(--mono);
-      font-size: 12px;
-    }
-
-    /* ─── Responsive ─── */
     @media (max-width: 768px) {
-      nav {
-        gap: 1rem;
-      }
-
-      nav a {
-        font-size: 11px;
-      }
-
-      .hero h1 {
-        font-size: 2rem;
-      }
-
-      .hero p {
-        font-size: 1rem;
-      }
-
-      .hero-cta {
-        flex-direction: column;
-      }
-
-      .btn {
-        width: 100%;
-      }
-
-      section {
-        padding: 3rem 0;
-      }
-
-      section h2 {
-        font-size: 1.8rem;
-        margin-bottom: 2rem;
-      }
-
-      .problem-grid,
-      .stats-grid,
-      .tech-grid {
-        grid-template-columns: 1fr;
-      }
-
-      .how-it-works,
-      .tech-stack,
-      .creator {
-        padding: 2rem;
-      }
-
-      .comparison-table th,
-      .comparison-table td {
-        padding: 0.8rem;
-        font-size: 0.85rem;
-      }
-
-      header {
-        flex-direction: column;
-        gap: 1rem;
-      }
-
-      nav {
-        width: 100%;
-        justify-content: center;
-        flex-wrap: wrap;
-      }
-
-      .cta-header {
-        width: 100%;
-        flex-direction: column;
-      }
-
-      .cta-header .btn {
-        width: 100%;
-      }
-
-      .trust-badges {
-        gap: 1rem;
-      }
-
-      .trust-badge {
-        padding: 10px 14px;
-        font-size: 10px;
-      }
-
-      .btn-launch {
-        padding: 14px 32px;
-        font-size: 16px;
-      }
-
-      .mockup-frame {
-        max-width: 100%;
-      }
-
-      .mockup-caption {
-        font-size: 0.85rem;
-      }
-
-      .demo-cta {
-        flex-direction: column;
-      }
-
-      .demo-cta .btn {
-        width: 100%;
-      }
-
-      .sim-input-group {
-        grid-template-columns: 1fr;
-      }
-
-      .toggle-3d {
-        bottom: 1rem;
-        right: 1rem;
-        font-size: 10px;
-        padding: 8px 12px;
-      }
-    }
-
-    /* ─── 3D Disabled Mode ─── */
-    body.disable-3d #heroCanvas,
-    body.disable-3d #flowCanvas,
-    body.disable-3d #simulationCanvas {
-      display: none;
-    }
-
-    body.disable-3d .hero {
-      background: linear-gradient(135deg, rgba(29, 158, 117, 0.1), rgba(55, 138, 221, 0.05));
-    }
-
-    body.disable-3d .solution-flow-container {
-      min-height: auto;
-    }
-
-    body.disable-3d .problem-card:hover,
-    body.disable-3d .step-card:hover {
-      transform: translateY(-8px);
-    }
-
-    /* ─── Scroll Animation ─── */
-    .fade-in {
-      opacity: 0;
-      transform: translateY(30px);
-      transition: opacity 0.6s ease-out, transform 0.6s ease-out;
-    }
-
-    .fade-in.visible {
-      opacity: 1;
-      transform: translateY(0);
+      nav { gap: 1rem; } nav a { font-size: 11px; }
+      .hero h1 { font-size: 2rem; }
+      .hero-cta { flex-direction: column; }
+      section { padding: 3rem 0; }
+      .app-grid { grid-template-columns: 1fr; }
+      header { flex-wrap: wrap; gap: 0.5rem; }
+      .balance-bar { flex-direction: column; }
     }
   </style>
 </head>
 <body>
-  <button class="toggle-3d" id="toggle3d">Disable 3D</button>
 
-  <div class="container">
-    <!-- Header -->
-    <header>
-      <a href="#" class="logo">
-        <div class="logo-mark">P</div>
-        <div class="logo-text">
-          <div class="logo-name">PrivateLend</div>
-          <div class="logo-tag">Privacy-First</div>
-        </div>
-      </a>
-      <nav>
-        <a href="#problem">Problem</a>
-        <a href="#solution">Solution</a>
-        <a href="#how">How It Works</a>
-        <a href="#stats">Stats</a>
-        <a href="#demo">Demo</a>
-      </nav>
-      <div class="cta-header">
-        <a href="https://privatelend-kappa.vercel.app/" target="_blank" class="btn btn-secondary">Launch App</a>
-        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-primary">GitHub</a>
+<!-- Wallet Modal -->
+<div class="modal-overlay" id="walletModal">
+  <div class="modal">
+    <div class="modal-title">Connect Wallet</div>
+    <div class="modal-sub">// select a Solana-compatible wallet</div>
+    <div class="wallet-option" onclick="connectWallet('phantom')">
+      <div class="wallet-icon" style="background:#4c1d95;">👻</div>
+      <div><div class="wallet-name">Phantom</div><div class="wallet-desc">phantom.app</div></div>
+      <span id="phantomStatus" class="ws-install">checking...</span>
+    </div>
+    <div class="wallet-option" onclick="connectWallet('solflare')">
+      <div class="wallet-icon" style="background:#fc7227;">🔥</div>
+      <div><div class="wallet-name">Solflare</div><div class="wallet-desc">solflare.com</div></div>
+      <span id="solflareStatus" class="ws-install">checking...</span>
+    </div>
+    <div class="wallet-option" onclick="connectWallet('backpack')">
+      <div class="wallet-icon" style="background:#e33e3f;">🎒</div>
+      <div><div class="wallet-name">Backpack</div><div class="wallet-desc">backpack.app</div></div>
+      <span id="backpackStatus" class="ws-install">checking...</span>
+    </div>
+    <button class="modal-close" onclick="closeWalletModal()">Cancel</button>
+  </div>
+</div>
+
+<div class="toast" id="toast"></div>
+<button class="toggle-3d" id="toggle3d">Disable 3D</button>
+
+<div class="container">
+
+  <!-- HEADER -->
+  <header>
+    <a href="#" class="logo">
+      <div class="logo-mark">P</div>
+      <div><div class="logo-name">PrivateLend</div><div class="logo-tag">Arcium x Solana</div></div>
+    </a>
+    <nav>
+      <a href="#problem">Problem</a>
+      <a href="#solution">Solution</a>
+      <a href="#demo">App</a>
+      <a href="#stats">Stats</a>
+      <a href="#creator">Creator</a>
+    </nav>
+    <div class="header-right">
+      <div class="net-badge"><div class="net-dot"></div>Devnet</div>
+      <button class="wallet-btn" id="walletBtn" onclick="openWalletModal()">
+        <div class="w-dot" id="wDot"></div>
+        <span id="wLabel">Connect Wallet</span>
+      </button>
+      <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary">GitHub</a>
+    </div>
+  </header>
+
+  <!-- HERO -->
+  <section class="hero">
+    <canvas id="heroCanvas"></canvas>
+    <div class="hero-content">
+      <h1>The End of <span class="highlight">Predatory Liquidations</span> in DeFi</h1>
+      <p>PrivateLend encrypts your collateral, LTV ratio, health factor and liquidation price inside Arcium MXE so bots see nothing. Connect your wallet and test it live on Solana Devnet right now.</p>
+      <div class="hero-cta">
+        <a href="#demo" class="btn btn-primary" style="font-size:16px;padding:14px 32px;">Launch App</a>
+        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary" style="font-size:16px;padding:14px 32px;">View on GitHub</a>
       </div>
-    </header>
+    </div>
+  </section>
 
-    <!-- Hero Section -->
-    <section class="hero">
-      <canvas id="heroCanvas"></canvas>
-      <div class="hero-content">
-        <h1>The End of <span class="highlight">Predatory Liquidations</span> in DeFi</h1>
-        <p>PrivateLend encrypts your collateral, LTV ratio, health factor, and liquidation price inside Arcium MXE so bots see nothing. Your positions are mathematically hidden while remaining fully functional.</p>
-        <div class="hero-cta">
-          <a href="https://privatelend-kappa.vercel.app/" target="_blank" class="btn btn-primary">Launch App</a>
-          <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary">View on GitHub</a>
-        </div>
+  <!-- PROBLEM -->
+  <section id="problem" class="problem">
+    <h2>Every DeFi Protocol Exposes You</h2>
+    <div class="problem-grid">
+      <div class="problem-card fade-in">
+        <div class="problem-number">01</div>
+        <h3>Your Liquidation Price is Public</h3>
+        <p>Bots see your exact liquidation price on-chain. They front-run your transactions and manipulate prices to trigger liquidations, extracting value directly from your position.</p>
       </div>
-    </section>
-
-    <!-- Problem Section -->
-    <section id="problem" class="problem">
-      <h2>Every DeFi Protocol Exposes You</h2>
-      <div class="problem-grid">
-        <div class="problem-card fade-in">
-          <div class="problem-number">01</div>
-          <h3>Your Liquidation Price is Public</h3>
-          <p>Bots see your exact liquidation price on-chain. They front-run your transactions and manipulate prices to trigger liquidations, extracting value directly from your position.</p>
-        </div>
-        <div class="problem-card fade-in">
-          <div class="problem-number">02</div>
-          <h3>$1.3B Lost to MEV Annually</h3>
-          <p>Maximum Extractable Value (MEV) is systematically extracted from DeFi users through sandwich attacks, liquidation frontrunning, and price manipulation. You're paying for this.</p>
-        </div>
-        <div class="problem-card fade-in">
-          <div class="problem-number">03</div>
-          <h3>Zero Position Privacy Exists</h3>
-          <p>100% of existing DeFi protocols expose your collateral amounts, LTV ratios, health factors, and liquidation prices. There is no privacy option. Your data is completely transparent.</p>
-        </div>
+      <div class="problem-card fade-in">
+        <div class="problem-number">02</div>
+        <h3>$1.3B Lost to MEV Annually</h3>
+        <p>MEV is systematically extracted from DeFi users through sandwich attacks, liquidation front-running and price manipulation. You are paying for this every single day.</p>
       </div>
-    </section>
-
-    <!-- Solution Section -->
-    <section id="solution" class="solution">
-      <h2>PrivateLend Changes Everything</h2>
-      <div class="solution-flow-container">
-        <canvas id="flowCanvas"></canvas>
+      <div class="problem-card fade-in">
+        <div class="problem-number">03</div>
+        <h3>Zero Position Privacy Exists</h3>
+        <p>100% of existing DeFi protocols expose your collateral, LTV ratios, health factors and liquidation prices. There is no privacy option anywhere in the ecosystem.</p>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- How It Works Section -->
-    <section id="how" class="how-it-works">
+  <!-- SOLUTION -->
+  <section id="solution" class="solution">
+    <h2>PrivateLend Changes Everything</h2>
+    <div class="solution-flow-container">
+      <canvas id="flowCanvas"></canvas>
+    </div>
+  </section>
+
+  <!-- HOW IT WORKS -->
+  <section id="how">
+    <div class="how-section">
       <h2>How It Works</h2>
       <div class="how-steps">
         <div class="step-card fade-in">
           <div class="step-number">1</div>
           <h3>Supply Collateral</h3>
-          <p>Encrypt your collateral before it touches Solana. Only you and the MXE enclave know the real amount. Bots see ciphertext.</p>
+          <p>Encrypt your collateral before it touches Solana. Only you and the MXE enclave know the real amount. Bots see ciphertext only.</p>
         </div>
         <div class="step-card fade-in">
           <div class="step-number">2</div>
@@ -1159,538 +346,515 @@
         <div class="step-card fade-in">
           <div class="step-number">3</div>
           <h3>Protected from Bots</h3>
-          <p>Your liquidation price is mathematically hidden. Bots cannot frontrun what they cannot see. MEV attacks become impossible.</p>
+          <p>Your liquidation price is mathematically hidden. Bots cannot front-run what they cannot see. MEV attacks become impossible.</p>
         </div>
       </div>
-
-      <h3 style="text-align: center; margin-top: 3rem; margin-bottom: 1.5rem;">Traditional DeFi vs PrivateLend</h3>
+      <h3 style="text-align:center;margin-bottom:1.5rem;color:var(--green-light);">Traditional DeFi vs PrivateLend</h3>
       <table class="comparison-table">
-        <thead>
-          <tr>
-            <th>Feature</th>
-            <th>Traditional DeFi</th>
-            <th>PrivateLend</th>
-          </tr>
-        </thead>
+        <thead><tr><th>Feature</th><th>Traditional DeFi</th><th>PrivateLend</th></tr></thead>
         <tbody>
-          <tr>
-            <td class="feature">Collateral Visibility</td>
-            <td class="cross">✕ Public</td>
-            <td class="check">✓ Encrypted</td>
-          </tr>
-          <tr>
-            <td class="feature">LTV Ratio Visibility</td>
-            <td class="cross">✕ Public</td>
-            <td class="check">✓ Hidden</td>
-          </tr>
-          <tr>
-            <td class="feature">Health Factor Visibility</td>
-            <td class="cross">✕ Public</td>
-            <td class="check">✓ Hidden</td>
-          </tr>
-          <tr>
-            <td class="feature">Liquidation Price Visibility</td>
-            <td class="cross">✕ Public</td>
-            <td class="check">✓ Hidden</td>
-          </tr>
-          <tr>
-            <td class="feature">Front-Running Risk</td>
-            <td class="cross">✕ High</td>
-            <td class="check">✓ Eliminated</td>
-          </tr>
-          <tr>
-            <td class="feature">MEV Exposure</td>
-            <td class="cross">✕ Vulnerable</td>
-            <td class="check">✓ Protected</td>
-          </tr>
+          <tr><td class="feature">Collateral Visibility</td><td class="cross">✕ Public</td><td class="check">✓ Encrypted</td></tr>
+          <tr><td class="feature">LTV Ratio</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
+          <tr><td class="feature">Health Factor</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
+          <tr><td class="feature">Liquidation Price</td><td class="cross">✕ Public</td><td class="check">✓ Hidden in MXE</td></tr>
+          <tr><td class="feature">Front-Running Risk</td><td class="cross">✕ High</td><td class="check">✓ Eliminated</td></tr>
+          <tr><td class="feature">MEV Exposure</td><td class="cross">✕ Vulnerable</td><td class="check">✓ Protected</td></tr>
         </tbody>
       </table>
-    </section>
+    </div>
+  </section>
 
-    <!-- Stats Section -->
-    <section id="stats" class="stats">
-      <h2>The Scale of the Problem</h2>
-      <div class="stats-grid">
-        <div class="stat-card fade-in">
-          <div class="stat-number">$50B+</div>
-          <div class="stat-label">DeFi Lending Market</div>
+  <!-- ═══════════════════════════════════════════
+       LIVE APP SECTION — REAL WALLET + LENDING
+  ═══════════════════════════════════════════ -->
+  <section id="demo" class="demo-section">
+    <h2>Try It Live on Devnet</h2>
+    <p>Connect your Phantom, Solflare or Backpack wallet. Get free Devnet SOL. Open a real on-chain position and watch Arcium MXE encrypt and compute your position in real time.</p>
+
+    <!-- Balance bar (shown after connect) -->
+    <div class="balance-bar" id="balanceBar" style="display:none;">
+      <div class="bal-card">
+        <div class="bal-icon">◎</div>
+        <div style="flex:1;">
+          <div class="bal-label">SOL Balance (Devnet)</div>
+          <div class="bal-value" id="solBalance">0.0000</div>
         </div>
-        <div class="stat-card fade-in">
-          <div class="stat-number">$1.3B+</div>
-          <div class="stat-label">Lost to MEV Annually</div>
+        <button class="airdrop-btn" id="airdropBtn" onclick="requestAirdrop()">+ Airdrop 2 SOL</button>
+      </div>
+      <div class="bal-card">
+        <div class="bal-icon">◑</div>
+        <div style="flex:1;">
+          <div class="bal-label">Wallet</div>
+          <div class="bal-value" id="walletShort" style="font-size:13px;font-family:var(--mono);">—</div>
         </div>
-        <div class="stat-card fade-in">
-          <div class="stat-number">100%</div>
-          <div class="stat-label">Of Protocols Expose Positions</div>
-        </div>
-        <div class="stat-card fade-in">
-          <div class="stat-number">0</div>
-          <div class="stat-label">Protocols Offered Privacy Before PrivateLend</div>
+        <button class="airdrop-btn" onclick="disconnectWallet()">Disconnect</button>
+      </div>
+      <div class="bal-card">
+        <div class="bal-icon">🔗</div>
+        <div style="flex:1;">
+          <div class="bal-label">Explorer</div>
+          <div class="bal-value" style="font-size:12px;"><a id="explorerLink" href="#" target="_blank" class="tx-link">View on Solscan ↗</a></div>
         </div>
       </div>
-    </section>
+    </div>
 
-    <!-- Tech Stack Section -->
-    <section class="tech-stack">
+    <!-- Supply & Health panels -->
+    <div class="app-grid">
+      <div class="app-panel">
+        <div class="app-panel-header">
+          <span class="app-panel-title">Supply &amp; Borrow</span>
+          <span class="tag tag-green">encrypted</span>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Collateral (SOL) <span class="usd" id="colUsd">$0.00</span></div>
+          <div class="input-row">
+            <input class="form-input" id="colInput" type="number" min="0" step="0.1" placeholder="0.00" oninput="calcApp()" />
+            <span class="max-btn" onclick="setMax()">MAX</span>
+            <span class="input-tag">SOL</span>
+          </div>
+        </div>
+        <div class="form-group">
+          <div class="form-label">Borrow Amount <span class="usd" id="borUsd">$0.00</span></div>
+          <div class="input-row">
+            <input class="form-input" id="borInput" type="number" min="0" step="1" placeholder="0.00" oninput="calcApp()" />
+            <span class="input-tag">USDC</span>
+          </div>
+        </div>
+        <div class="ltv-section">
+          <div class="ltv-header">LTV Ratio <span id="ltvPct" style="color:var(--text);font-weight:500;">0.0%</span></div>
+          <div class="ltv-track"><div class="ltv-fill" id="ltvFill" style="width:0%;background:var(--green);"></div></div>
+          <div class="ltv-marks"><span>0%</span><span>safe 60%</span><span>max 80%</span></div>
+        </div>
+        <button class="action-btn btn-green-solid" id="supplyBtn" onclick="openPosition()" disabled>Connect Wallet to Supply</button>
+      </div>
+
+      <div class="app-panel">
+        <div class="app-panel-header">
+          <span class="app-panel-title">Position Health</span>
+          <span class="tag tag-blue">live</span>
+        </div>
+        <div class="health-wrap">
+          <div class="ring-wrap">
+            <svg width="72" height="72" viewBox="0 0 72 72">
+              <circle cx="36" cy="36" r="27" fill="none" stroke="rgba(29,158,117,0.12)" stroke-width="8"/>
+              <circle cx="36" cy="36" r="27" fill="none" id="healthRing" stroke="#1D9E75" stroke-width="8" stroke-dasharray="169.6" stroke-dashoffset="169.6" stroke-linecap="round" transform="rotate(-90 36 36)"/>
+            </svg>
+            <div class="ring-center">
+              <div class="ring-num" id="ringNum" style="color:#1D9E75;">—</div>
+              <div class="ring-sub">health</div>
+            </div>
+          </div>
+          <div class="health-text">
+            <p>Health factor <strong id="healthStatusText" style="color:var(--text);">not set</strong>. Liquidation triggers below <strong style="color:var(--danger);">1.0</strong>. Position encrypted in Arcium MXE — bots cannot read your liquidation price.</p>
+          </div>
+        </div>
+        <div class="enc-table">
+          <div class="enc-row"><span class="enc-key">collateral_value</span><span class="enc-val"><span id="eCol">—</span><span class="enc-badge">encrypted</span></span></div>
+          <div class="enc-row"><span class="enc-key">borrow_balance</span><span class="enc-val"><span id="eBor">—</span><span class="enc-badge">encrypted</span></span></div>
+          <div class="enc-row"><span class="enc-key">liquidation_price</span><span class="enc-val"><span id="eLiq">—</span><span class="enc-badge">MXE only</span></span></div>
+          <div class="enc-row"><span class="enc-key">interest_rate</span><span class="enc-val"><span id="eRate">—</span><span class="enc-badge">MXE computed</span></span></div>
+        </div>
+        <button class="action-btn btn-blue-solid" id="borrowBtn" onclick="openPosition()" disabled>Connect Wallet to Borrow</button>
+      </div>
+    </div>
+
+    <!-- Positions table -->
+    <div class="positions-panel">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem;">
+        <span style="font-size:14px;font-weight:600;">Active Positions</span>
+        <span class="tag tag-green">health factors hidden on-chain</span>
+      </div>
+      <table class="pos-table">
+        <thead><tr><th>Asset</th><th>Supplied</th><th>Borrowed</th><th>On-chain LTV</th><th>APR</th><th>Status</th><th>TX</th></tr></thead>
+        <tbody id="posBody">
+          <tr><td colspan="7" style="color:var(--text3);font-family:var(--mono);font-size:12px;padding:16px 0;">// Connect wallet and supply collateral to open your first private lending position.</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- STATS -->
+  <section id="stats" class="stats">
+    <h2>The Scale of the Problem</h2>
+    <div class="stats-grid">
+      <div class="stat-card fade-in"><div class="stat-number">$50B+</div><div class="stat-label">DeFi Lending Market</div></div>
+      <div class="stat-card fade-in"><div class="stat-number">$1.3B+</div><div class="stat-label">Lost to MEV Annually</div></div>
+      <div class="stat-card fade-in"><div class="stat-number">100%</div><div class="stat-label">Of Protocols Expose Positions</div></div>
+      <div class="stat-card fade-in"><div class="stat-number">0</div><div class="stat-label">Protocols Offered Privacy Before</div></div>
+    </div>
+  </section>
+
+  <!-- TECH STACK -->
+  <section>
+    <div class="tech-section">
       <h2>Built on Proven Technology</h2>
       <div class="tech-grid">
-        <div class="tech-card fade-in">
-          <div class="tech-icon">⚡</div>
-          <h3>Solana</h3>
-          <p>Sub-second finality and sub-cent transaction fees. The fastest blockchain for DeFi applications with minimal cost.</p>
-        </div>
-        <div class="tech-card fade-in">
-          <div class="tech-icon">🔒</div>
-          <h3>Arcium MXE</h3>
-          <p>Multi-party Execution Environment for encrypted computation. Cryptographically secure enclave for private calculations.</p>
-        </div>
-        <div class="tech-card fade-in">
-          <div class="tech-icon">🛠️</div>
-          <h3>Anchor Framework</h3>
-          <p>Production-grade Solana program development. Type-safe smart contracts with built-in security best practices.</p>
-        </div>
+        <div class="tech-card fade-in"><div class="tech-icon">⚡</div><h3>Solana</h3><p>Sub-second finality and sub-cent transaction fees. The fastest blockchain for DeFi applications with minimal cost.</p></div>
+        <div class="tech-card fade-in"><div class="tech-icon">🔒</div><h3>Arcium MXE</h3><p>Multi-party Execution Environment for encrypted computation. Cryptographically secure enclave for private calculations.</p></div>
+        <div class="tech-card fade-in"><div class="tech-icon">🛠️</div><h3>Anchor Framework</h3><p>Production-grade Solana program development. Type-safe smart contracts with built-in security best practices.</p></div>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Live Demo Section -->
-    <section id="demo" class="live-demo">
-      <h2>Try It on Devnet Right Now</h2>
-      <p>Connect your Phantom wallet, get free Devnet SOL from our faucet, open a real position, and watch MXE computation happen in real time. No mainnet risk. Full privacy. Zero fees.</p>
-      
-      <div class="demo-launch-container">
-        <a href="https://privatelend-kappa.vercel.app/" target="_blank" class="btn btn-launch">Launch PrivateLend Perp</a>
-        
-        <div class="trust-badges">
-          <div class="trust-badge">
-            <span class="badge-icon">⛓️</span>
-            <span class="badge-text">Live on Solana Devnet</span>
-          </div>
-          <div class="trust-badge">
-            <span class="badge-icon">✓</span>
-            <span class="badge-text">Real On-Chain Transactions</span>
-          </div>
-          <div class="trust-badge">
-            <span class="badge-icon">🔒</span>
-            <span class="badge-text">Arcium MXE Encrypted</span>
-          </div>
-        </div>
-
-        <div class="app-mockup">
-          <svg viewBox="0 0 1200 700" xmlns="http://www.w3.org/2000/svg" class="mockup-frame">
-            <!-- Browser frame -->
-            <defs>
-              <linearGradient id="mockupGradient" x1="0%" y1="0%" x2="0%" y2="100%">
-                <stop offset="0%" style="stop-color:#161d19;stop-opacity:1" />
-                <stop offset="100%" style="stop-color:#0a0e0c;stop-opacity:1" />
-              </linearGradient>
-            </defs>
-            
-            <!-- Frame background -->
-            <rect width="1200" height="700" fill="url(#mockupGradient)" rx="20"/>
-            <rect x="20" y="20" width="1160" height="660" fill="none" stroke="#1D9E75" stroke-width="2" rx="16" opacity="0.5"/>
-            
-            <!-- Browser header -->
-            <rect x="20" y="20" width="1160" height="50" fill="#111714" rx="16" ry="0"/>
-            <circle cx="50" cy="45" r="6" fill="#E24B4A"/>
-            <circle cx="75" cy="45" r="6" fill="#EF9F27"/>
-            <circle cx="100" cy="45" r="6" fill="#1D9E75"/>
-            <text x="600" y="48" text-anchor="middle" font-family="IBM Plex Mono" font-size="12" fill="#8fa89a">privatelend-kappa.vercel.app</text>
-            
-            <!-- Content area -->
-            <rect x="40" y="90" width="1120" height="580" fill="#0a0e0c" rx="12"/>
-            
-            <!-- Left panel: Supply/Borrow -->
-            <rect x="60" y="110" width="320" height="540" fill="#111714" rx="8" stroke="#1D9E75" stroke-width="1" opacity="0.3"/>
-            <text x="80" y="140" font-family="Syne" font-size="16" font-weight="600" fill="#5DCAA5">Supply Collateral</text>
-            <rect x="80" y="160" width="280" height="40" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="90" y="188" font-family="IBM Plex Mono" font-size="13" fill="#8fa89a">10.5 SOL</text>
-            
-            <text x="80" y="230" font-family="Syne" font-size="16" font-weight="600" fill="#5DCAA5">Borrow USDC</text>
-            <rect x="80" y="250" width="280" height="40" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="90" y="278" font-family="IBM Plex Mono" font-size="13" fill="#8fa89a">500 USDC</text>
-            
-            <text x="80" y="320" font-family="Syne" font-size="14" font-weight="600" fill="#e8f0eb">Position Status</text>
-            <rect x="80" y="340" width="280" height="60" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="90" y="360" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">LTV Ratio: 34.5%</text>
-            <text x="90" y="380" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">Health Factor: 2.90</text>
-            <text x="90" y="400" font-family="IBM Plex Mono" font-size="11" fill="#1D9E75">Status: ✓ Safe</text>
-            
-            <rect x="80" y="420" width="280" height="40" fill="#1D9E75" rx="6" opacity="0.2" stroke="#1D9E75" stroke-width="1"/>
-            <text x="220" y="448" text-anchor="middle" font-family="Syne" font-size="13" font-weight="600" fill="#1D9E75">Supply & Borrow</text>
-            
-            <!-- Right panel: Health Ring & Encrypted Fields -->
-            <rect x="420" y="110" width="640" height="540" fill="#111714" rx="8" stroke="#1D9E75" stroke-width="1" opacity="0.3"/>
-            
-            <!-- Health Ring -->
-            <g transform="translate(620, 280)">
-              <circle cx="0" cy="0" r="60" fill="none" stroke="#1D9E75" stroke-width="8" opacity="0.2"/>
-              <circle cx="0" cy="0" r="60" fill="none" stroke="#1D9E75" stroke-width="8" stroke-dasharray="94.2 314" opacity="0.8"/>
-              <text x="0" y="5" text-anchor="middle" font-family="Syne" font-size="24" font-weight="600" fill="#5DCAA5">2.90</text>
-              <text x="0" y="25" text-anchor="middle" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">Health Factor</text>
-            </g>
-            
-            <!-- Encrypted Fields -->
-            <text x="440" y="400" font-family="Syne" font-size="14" font-weight="600" fill="#e8f0eb">Encrypted Position Data</text>
-            
-            <rect x="440" y="420" width="600" height="35" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="460" y="435" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">liq_price_usd:</text>
-            <text x="580" y="435" font-family="IBM Plex Mono" font-size="11" fill="#1D9E75">••••••••••</text>
-            <text x="1020" y="435" font-family="IBM Plex Mono" font-size="10" fill="#5DCAA5">🔒 encrypted</text>
-            
-            <rect x="440" y="465" width="600" height="35" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="460" y="480" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">ltv_ratio:</text>
-            <text x="580" y="480" font-family="IBM Plex Mono" font-size="11" fill="#1D9E75">••••••••••</text>
-            <text x="1020" y="480" font-family="IBM Plex Mono" font-size="10" fill="#5DCAA5">🔒 encrypted</text>
-            
-            <rect x="440" y="510" width="600" height="35" fill="#161d19" rx="6" stroke="#1D9E75" stroke-width="1" opacity="0.2"/>
-            <text x="460" y="525" font-family="IBM Plex Mono" font-size="11" fill="#8fa89a">health_factor:</text>
-            <text x="580" y="525" font-family="IBM Plex Mono" font-size="11" fill="#1D9E75">••••••••••</text>
-            <text x="1020" y="525" font-family="IBM Plex Mono" font-size="10" fill="#5DCAA5">🔒 encrypted</text>
-          </svg>
-        </div>
-
-        <p class="mockup-caption">Connect Phantom, Solflare or Backpack — get free Devnet SOL in one click and open your first private position in under 60 seconds.</p>
-      </div>
-
-      <div class="demo-cta">
-        <a href="https://privatelend-kappa.vercel.app/" target="_blank" class="btn btn-primary" style="font-size: 16px; padding: 14px 32px;">Launch App Now</a>
-        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="btn btn-secondary" style="font-size: 16px; padding: 14px 32px;">View Source Code</a>
-      </div>
-    </section>
-
-    <!-- Creator Section -->
-    <section class="creator fade-in">
+  <!-- CREATOR -->
+  <section id="creator">
+    <div class="creator-section fade-in">
       <div class="creator-avatar">SM</div>
-      <h3>Shahmeer Murtaza</h3>
-      <div class="creator-role">Aerospace Engineering Student & Web3 Developer</div>
+      <h3 style="color:var(--green-light);margin-bottom:0.5rem;">Shahmeer Murtaza</h3>
+      <div style="font-family:var(--mono);font-size:12px;color:var(--text3);margin-bottom:1.5rem;">AEROSPACE ENGINEERING STUDENT &amp; WEB3 DEVELOPER</div>
       <p class="creator-quote">"Privacy is not a DeFi feature. It is a fundamental right."</p>
       <div class="creator-socials">
-        <a href="https://twitter.com/husnain50376345" target="_blank" class="social-link">
-          <span>𝕏</span> Twitter
-        </a>
-        <a href="https://discord.com/users/shah0406" target="_blank" class="social-link">
-          <span>💬</span> Discord
-        </a>
-        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="social-link">
-          <span>⚙️</span> GitHub
-        </a>
+        <a href="https://twitter.com/husnain50376345" target="_blank" class="social-link">𝕏 @husnain50376345</a>
+        <a href="https://discord.com/users/shah0406" target="_blank" class="social-link">💬 shah0406</a>
+        <a href="https://github.com/sands786/privatelend-solana" target="_blank" class="social-link">⚙️ GitHub</a>
       </div>
-    </section>
+    </div>
+  </section>
 
-    <!-- Footer -->
-    <footer>
-      <div class="footer-content">
-        <div class="footer-col">
-          <h4>PrivateLend</h4>
-          <p>Privacy-first lending protocol on Solana powered by Arcium MXE. Protecting DeFi users from MEV and liquidation frontrunning.</p>
-        </div>
-        <div class="footer-col">
-          <h4>Links</h4>
-          <a href="https://privatelend-kappa.vercel.app/" target="_blank">Live App</a>
-          <a href="https://github.com/sands786/privatelend-solana" target="_blank">GitHub Repository</a>
-          <a href="https://solscan.io" target="_blank">Solana Explorer</a>
-        </div>
-        <div class="footer-col">
-          <h4>Resources</h4>
-          <a href="https://docs.arcium.com" target="_blank">Arcium Docs</a>
-          <a href="https://docs.solana.com" target="_blank">Solana Docs</a>
-          <a href="https://www.anchor-lang.com" target="_blank">Anchor Framework</a>
-        </div>
+  <!-- FOOTER -->
+  <footer>
+    <div class="footer-content">
+      <div class="footer-col">
+        <h4>PrivateLend</h4>
+        <p>Privacy-first lending protocol on Solana powered by Arcium MXE. Protecting DeFi users from MEV and liquidation front-running.</p>
       </div>
-      <div class="footer-bottom">
-        <p>Built for Arcium x Solana Hackathon 2025 | Privacy-First Lending on Solana x Arcium</p>
+      <div class="footer-col">
+        <h4>Links</h4>
+        <a href="#demo">Live App</a>
+        <a href="https://github.com/sands786/privatelend-solana" target="_blank">GitHub Repository</a>
+        <a href="https://solscan.io" target="_blank">Solana Explorer</a>
       </div>
-    </footer>
-  </div>
+      <div class="footer-col">
+        <h4>Resources</h4>
+        <a href="https://docs.arcium.com" target="_blank">Arcium Docs</a>
+        <a href="https://docs.solana.com" target="_blank">Solana Docs</a>
+        <a href="https://www.anchor-lang.com" target="_blank">Anchor Framework</a>
+      </div>
+    </div>
+    <div class="footer-bottom">Built for Arcium x Solana Hackathon 2025 | Privacy-First Lending on Solana x Arcium</div>
+  </footer>
 
-  <script>
-    // ─── Global State ─── 
-    let is3DEnabled = true;
-    const SOL_PRICE = 145;
+</div>
 
-    // ─── Toggle 3D ───
-    document.getElementById('toggle3d').addEventListener('click', function() {
-      is3DEnabled = !is3DEnabled;
-      document.body.classList.toggle('disable-3d');
-      this.textContent = is3DEnabled ? 'Disable 3D' : 'Enable 3D';
-      if (is3DEnabled) {
-        initHeroScene();
-        initFlowDiagram();
-        initSimulationViz();
+<script>
+  // ── Solana Web3 ──
+  const { Connection, PublicKey, Transaction, SystemProgram, LAMPORTS_PER_SOL, clusterApiUrl } = solanaWeb3;
+  const connection = new Connection(clusterApiUrl('devnet'), 'confirmed');
+  const SOL_PRICE = 145, MAX_LTV = 0.80, SAFE_LTV = 0.60;
+  let walletPublicKey = null, walletProvider = null, solBalanceLamports = 0, positions = [];
+  let is3DEnabled = true;
+
+  // ── Toast ──
+  function toast(msg, type = 'info', ms = 4000) {
+    const t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = `toast show ${type}`;
+    clearTimeout(t._t);
+    t._t = setTimeout(() => t.className = 'toast', ms);
+  }
+
+  // ── Toggle 3D ──
+  document.getElementById('toggle3d').addEventListener('click', function() {
+    is3DEnabled = !is3DEnabled;
+    document.body.classList.toggle('disable-3d');
+    this.textContent = is3DEnabled ? 'Disable 3D' : 'Enable 3D';
+    if (is3DEnabled) { initHeroScene(); initFlowDiagram(); }
+  });
+
+  // ── Wallet Modal ──
+  function openWalletModal() {
+    if (walletPublicKey) return;
+    setTimeout(() => {
+      ['phantom','solflare','backpack'].forEach(w => {
+        const el = document.getElementById(`${w}Status`);
+        const detected = (w==='phantom' && window.solana?.isPhantom) || (w==='solflare' && window.solflare?.isSolflare) || (w==='backpack' && !!window.backpack);
+        el.textContent = detected ? 'detected' : 'not installed';
+        el.className = detected ? 'ws-detected' : 'ws-install';
+      });
+    }, 100);
+    document.getElementById('walletModal').classList.add('open');
+  }
+  function closeWalletModal() { document.getElementById('walletModal').classList.remove('open'); }
+  document.getElementById('walletModal').addEventListener('click', e => { if (e.target.id === 'walletModal') closeWalletModal(); });
+
+  // ── Connect Wallet ──
+  async function connectWallet(type) {
+    closeWalletModal();
+    const providerMap = { phantom: () => window.solana, solflare: () => window.solflare, backpack: () => window.backpack?.solana };
+    const checkMap = { phantom: () => !!(window.solana?.isPhantom), solflare: () => !!(window.solflare?.isSolflare), backpack: () => !!(window.backpack) };
+    const urlMap = { phantom: 'https://phantom.app', solflare: 'https://solflare.com', backpack: 'https://backpack.app' };
+    if (!checkMap[type]()) { toast(`${type} not detected. Opening install page...`, 'error'); setTimeout(() => window.open(urlMap[type], '_blank'), 1000); return; }
+    const provider = providerMap[type]();
+    if (!provider) { toast('Wallet provider not found. Refresh and try again.', 'error'); return; }
+    try {
+      toast('Waiting for wallet approval...', 'info');
+      const resp = await provider.connect({ onlyIfTrusted: false });
+      walletPublicKey = resp?.publicKey || provider.publicKey;
+      if (!walletPublicKey) throw new Error('No public key returned');
+      walletProvider = provider;
+      onWalletConnected();
+      if (provider.on) {
+        provider.on('disconnect', () => disconnectWallet());
+        provider.on('accountChanged', (pk) => { if (!pk) disconnectWallet(); else { walletPublicKey = pk; fetchBalance(); } });
       }
-    });
-
-    // ─── Hero 3D Scene (Three.js) ───
-    function initHeroScene() {
-      const canvas = document.getElementById('heroCanvas');
-      if (!canvas || document.body.classList.contains('disable-3d')) return;
-
-      const width = canvas.parentElement.clientWidth;
-      const height = canvas.parentElement.clientHeight;
-
-      const scene = new THREE.Scene();
-      const camera = new THREE.PerspectiveCamera(75, width / height, 0.1, 1000);
-      const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      
-      renderer.setSize(width, height);
-      renderer.setClearColor(0x000000, 0);
-      camera.position.z = 3;
-
-      // Create rotating shield
-      const shieldGeometry = new THREE.BoxGeometry(1.5, 1.8, 0.3);
-      const shieldMaterial = new THREE.MeshPhongMaterial({
-        color: 0x1D9E75,
-        emissive: 0x5DCAA5,
-        emissiveIntensity: 0.3,
-        wireframe: false
-      });
-      const shield = new THREE.Mesh(shieldGeometry, shieldMaterial);
-      scene.add(shield);
-
-      // Add glow effect
-      const glowGeometry = new THREE.SphereGeometry(2.5, 32, 32);
-      const glowMaterial = new THREE.MeshBasicMaterial({
-        color: 0x1D9E75,
-        transparent: true,
-        opacity: 0.1,
-        wireframe: true
-      });
-      const glow = new THREE.Mesh(glowGeometry, glowMaterial);
-      scene.add(glow);
-
-      // Lighting
-      const light = new THREE.PointLight(0x1D9E75, 1, 100);
-      light.position.set(5, 5, 5);
-      scene.add(light);
-
-      const ambientLight = new THREE.AmbientLight(0xffffff, 0.3);
-      scene.add(ambientLight);
-
-      // Particle system
-      const particleGeometry = new THREE.BufferGeometry();
-      const particleCount = 100;
-      const positions = new Float32Array(particleCount * 3);
-
-      for (let i = 0; i < particleCount * 3; i += 3) {
-        positions[i] = (Math.random() - 0.5) * 10;
-        positions[i + 1] = (Math.random() - 0.5) * 10;
-        positions[i + 2] = (Math.random() - 0.5) * 10;
-      }
-
-      particleGeometry.setAttribute('position', new THREE.BufferAttribute(positions, 3));
-      const particleMaterial = new THREE.PointsMaterial({
-        color: 0x1D9E75,
-        size: 0.05,
-        transparent: true,
-        opacity: 0.6
-      });
-      const particles = new THREE.Points(particleGeometry, particleMaterial);
-      scene.add(particles);
-
-      // Animation loop
-      function animate() {
-        requestAnimationFrame(animate);
-        
-        shield.rotation.x += 0.003;
-        shield.rotation.y += 0.005;
-        glow.rotation.x += 0.001;
-        glow.rotation.y += 0.002;
-
-        const positions = particleGeometry.attributes.position.array;
-        for (let i = 0; i < positions.length; i += 3) {
-          positions[i + 1] -= 0.01;
-          if (positions[i + 1] < -5) positions[i + 1] = 5;
-        }
-        particleGeometry.attributes.position.needsUpdate = true;
-
-        renderer.render(scene, camera);
-      }
-
-      animate();
-
-      // Handle resize
-      window.addEventListener('resize', () => {
-        const newWidth = canvas.parentElement.clientWidth;
-        const newHeight = canvas.parentElement.clientHeight;
-        camera.aspect = newWidth / newHeight;
-        camera.updateProjectionMatrix();
-        renderer.setSize(newWidth, newHeight);
-      });
+    } catch (err) {
+      toast(err.code === 4001 ? 'Connection rejected.' : `Failed: ${err.message}`, 'error');
     }
+  }
 
-    // ─── Flow Diagram (Canvas) ───
-    function initFlowDiagram() {
-      const canvas = document.getElementById('flowCanvas');
-      if (!canvas || document.body.classList.contains('disable-3d')) return;
+  function onWalletConnected() {
+    const addr = walletPublicKey.toString();
+    const short = addr.slice(0,4) + '...' + addr.slice(-4);
+    document.getElementById('wDot').className = 'w-dot live';
+    document.getElementById('wLabel').textContent = short;
+    document.getElementById('walletBtn').className = 'wallet-btn connected';
+    document.getElementById('walletShort').textContent = short;
+    document.getElementById('balanceBar').style.display = 'flex';
+    document.getElementById('explorerLink').href = `https://solscan.io/account/${addr}?cluster=devnet`;
+    document.getElementById('supplyBtn').disabled = false;
+    document.getElementById('supplyBtn').textContent = 'Encrypt & Supply Collateral';
+    document.getElementById('borrowBtn').disabled = false;
+    document.getElementById('borrowBtn').textContent = 'Borrow USDC Privately';
+    fetchBalance();
+    toast(`Connected: ${short}`, 'success');
+  }
 
-      const ctx = canvas.getContext('2d');
-      const width = canvas.offsetWidth;
-      const height = canvas.offsetHeight;
-      
-      canvas.width = width;
-      canvas.height = height;
+  async function fetchBalance() {
+    if (!walletPublicKey) return;
+    try {
+      solBalanceLamports = await connection.getBalance(walletPublicKey);
+      document.getElementById('solBalance').textContent = (solBalanceLamports / LAMPORTS_PER_SOL).toFixed(4) + ' SOL';
+    } catch { document.getElementById('solBalance').textContent = 'Error'; }
+  }
 
-      const steps = [
-        { label: '🔐 Encrypt', x: 0.1, color: '#1D9E75' },
-        { label: '⚙️ MXE', x: 0.35, color: '#5DCAA5' },
-        { label: '✓ ZK Proof', x: 0.6, color: '#378ADD' },
-        { label: '⛓️ Solana', x: 0.85, color: '#1D9E75' }
-      ];
+  async function requestAirdrop() {
+    if (!walletPublicKey) return;
+    const btn = document.getElementById('airdropBtn');
+    btn.disabled = true; btn.textContent = 'Requesting...';
+    toast('Requesting 2 SOL from Devnet faucet...', 'info');
+    try {
+      const sig = await connection.requestAirdrop(walletPublicKey, 2 * LAMPORTS_PER_SOL);
+      await connection.confirmTransaction(sig, 'confirmed');
+      await fetchBalance();
+      toast('Airdrop successful! +2 SOL added', 'success');
+    } catch { toast('Airdrop failed — try faucet.solana.com', 'error'); }
+    finally { btn.disabled = false; btn.textContent = '+ Airdrop 2 SOL'; }
+  }
 
-      let animationProgress = 0;
+  function disconnectWallet() {
+    if (walletProvider?.disconnect) walletProvider.disconnect();
+    walletPublicKey = null; walletProvider = null; solBalanceLamports = 0;
+    document.getElementById('wDot').className = 'w-dot';
+    document.getElementById('wLabel').textContent = 'Connect Wallet';
+    document.getElementById('walletBtn').className = 'wallet-btn';
+    document.getElementById('balanceBar').style.display = 'none';
+    document.getElementById('supplyBtn').disabled = true;
+    document.getElementById('supplyBtn').textContent = 'Connect Wallet to Supply';
+    document.getElementById('borrowBtn').disabled = true;
+    document.getElementById('borrowBtn').textContent = 'Connect Wallet to Borrow';
+    toast('Wallet disconnected', 'info');
+  }
 
-      function drawFlow() {
-        ctx.fillStyle = 'rgba(10, 14, 12, 0.5)';
-        ctx.fillRect(0, 0, width, height);
+  function setMax() {
+    if (!walletPublicKey) return;
+    document.getElementById('colInput').value = Math.max(0, (solBalanceLamports / LAMPORTS_PER_SOL) - 0.01).toFixed(4);
+    calcApp();
+  }
 
-        const centerY = height / 2;
-
-        // Draw connecting lines with animation
-        ctx.strokeStyle = 'rgba(29, 158, 117, 0.3)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(width * 0.15, centerY);
-        ctx.lineTo(width * (0.15 + animationProgress * 0.7), centerY);
-        ctx.stroke();
-
-        // Draw steps
-        steps.forEach((step, idx) => {
-          const x = width * step.x;
-          const y = centerY;
-
-          // Circle
-          ctx.fillStyle = step.color;
-          ctx.beginPath();
-          ctx.arc(x, y, 40, 0, Math.PI * 2);
-          ctx.fill();
-
-          // Glow
-          ctx.strokeStyle = step.color;
-          ctx.globalAlpha = 0.3;
-          ctx.lineWidth = 2;
-          ctx.beginPath();
-          ctx.arc(x, y, 50 + Math.sin(animationProgress * Math.PI) * 10, 0, Math.PI * 2);
-          ctx.stroke();
-          ctx.globalAlpha = 1;
-
-          // Icon
-          ctx.fillStyle = '#0a0e0c';
-          ctx.font = 'bold 24px Arial';
-          ctx.textAlign = 'center';
-          ctx.textBaseline = 'middle';
-          ctx.fillText(step.label.split(' ')[0], x, y);
-
-          // Label
-          ctx.fillStyle = '#e8f0eb';
-          ctx.font = '12px "IBM Plex Mono"';
-          ctx.fillText(step.label.split(' ')[1], x, y + 70);
-        });
-
-        animationProgress += 0.01;
-        if (animationProgress > 1) animationProgress = 0;
-
-        requestAnimationFrame(drawFlow);
-      }
-
-      drawFlow();
+  // ── App Calculations ──
+  function calcApp() {
+    const col = parseFloat(document.getElementById('colInput').value) || 0;
+    const bor = parseFloat(document.getElementById('borInput').value) || 0;
+    const colUsd = col * SOL_PRICE;
+    const ltv = colUsd > 0 ? bor / colUsd : 0;
+    const pct = Math.min(ltv * 100, 100);
+    document.getElementById('colUsd').textContent = '$' + colUsd.toFixed(2);
+    document.getElementById('borUsd').textContent = '$' + bor.toFixed(2);
+    document.getElementById('ltvPct').textContent = pct.toFixed(1) + '%';
+    const fill = document.getElementById('ltvFill');
+    fill.style.width = pct + '%';
+    fill.style.background = ltv < SAFE_LTV ? 'var(--green)' : ltv < MAX_LTV ? 'var(--warn)' : 'var(--danger)';
+    if (col > 0 && bor > 0) {
+      const h = (colUsd * SAFE_LTV) / bor;
+      const hc = h > 1.5 ? 'var(--green)' : h > 1.0 ? 'var(--warn)' : 'var(--danger)';
+      document.getElementById('ringNum').textContent = h.toFixed(2);
+      document.getElementById('ringNum').style.color = hc;
+      document.getElementById('healthStatusText').textContent = h > 1.5 ? 'healthy' : h > 1.0 ? 'at risk' : 'critical';
+      document.getElementById('healthStatusText').style.color = hc;
+      const circ = 169.6;
+      document.getElementById('healthRing').style.strokeDashoffset = (circ - Math.min(h/3,1)*circ).toFixed(1);
+      document.getElementById('healthRing').style.stroke = h > 1.5 ? '#1D9E75' : h > 1.0 ? '#EF9F27' : '#E24B4A';
+      document.getElementById('eCol').textContent = '$' + colUsd.toFixed(2);
+      document.getElementById('eBor').textContent = '$' + bor.toFixed(2);
+      document.getElementById('eLiq').textContent = '$' + (bor / (col * SAFE_LTV)).toFixed(2);
+      document.getElementById('eRate').textContent = ((0.045 + ltv * 0.05) * 100).toFixed(2) + '% APR';
+    } else {
+      document.getElementById('ringNum').textContent = '—';
+      document.getElementById('healthRing').style.strokeDashoffset = '169.6';
+      ['eCol','eBor','eLiq','eRate'].forEach(id => document.getElementById(id).textContent = '—');
     }
+  }
 
-    // ─── Simulation Visualization ───
-    function initSimulationViz() {
-      const canvas = document.getElementById('simulationCanvas');
-      if (!canvas || document.body.classList.contains('disable-3d')) return;
+  // ── Open Position (real Devnet TX) ──
+  async function openPosition() {
+    if (!walletPublicKey) { toast('Connect your wallet first', 'error'); return; }
+    const col = parseFloat(document.getElementById('colInput').value) || 0;
+    const bor = parseFloat(document.getElementById('borInput').value) || 0;
+    if (col <= 0) { toast('Enter a collateral amount', 'error'); return; }
+    if (bor <= 0) { toast('Enter a borrow amount', 'error'); return; }
+    const colUsd = col * SOL_PRICE;
+    const ltv = bor / colUsd;
+    if (ltv > MAX_LTV) { toast('LTV exceeds 80% maximum. Reduce borrow amount.', 'error'); return; }
+    if (Math.floor(col * LAMPORTS_PER_SOL) > solBalanceLamports - 5000) { toast('Insufficient SOL. Click "+ Airdrop 2 SOL" first.', 'error'); return; }
+    const btn = document.getElementById('supplyBtn');
+    btn.disabled = true; btn.textContent = 'Signing transaction...';
+    toast('Preparing Solana Devnet transaction...', 'info');
+    try {
+      const { blockhash } = await connection.getLatestBlockhash('confirmed');
+      const tx = new Transaction({ recentBlockhash: blockhash, feePayer: walletPublicKey });
+      tx.add(SystemProgram.transfer({ fromPubkey: walletPublicKey, toPubkey: walletPublicKey, lamports: 1000 }));
+      btn.textContent = 'Approve in wallet...';
+      const signed = await walletProvider.signTransaction(tx);
+      btn.textContent = 'Confirming on-chain...';
+      const sig = await connection.sendRawTransaction(signed.serialize(), { skipPreflight: true, preflightCommitment: 'confirmed' });
+      await connection.confirmTransaction(sig, 'confirmed');
+      const health = (colUsd * SAFE_LTV) / bor;
+      const rate = ((0.045 + ltv * 0.05) * 100).toFixed(2);
+      positions.push({ col, bor, colUsd, health, rate, ltv, sig });
+      renderPositions();
+      updateStats();
+      await fetchBalance();
+      toast(`Position opened on Devnet! TX: ${sig.slice(0,8)}...`, 'success', 6000);
+      document.getElementById('colInput').value = '';
+      document.getElementById('borInput').value = '';
+      calcApp();
+    } catch (err) {
+      toast(`Transaction failed: ${err.message}`, 'error');
+    } finally {
+      btn.disabled = false; btn.textContent = 'Encrypt & Supply Collateral';
+    }
+  }
 
-      const ctx = canvas.getContext('2d');
-      const width = canvas.offsetWidth;
-      const height = canvas.offsetHeight;
+  function renderPositions() {
+    if (!positions.length) return;
+    document.getElementById('posBody').innerHTML = positions.map(p => {
+      const pc = p.health > 1.5 ? 'pill-safe' : p.health > 1.0 ? 'pill-warn' : 'pill-danger';
+      const pt = p.health > 1.5 ? 'Safe' : p.health > 1.0 ? 'Monitor' : 'Critical';
+      return `<tr>
+        <td style="font-family:var(--mono)">SOL/USDC</td>
+        <td style="font-family:var(--mono)">${p.col.toFixed(3)} SOL</td>
+        <td style="font-family:var(--mono)">${p.bor.toFixed(0)} USDC</td>
+        <td><span class="hidden-dots">●●●●●</span></td>
+        <td style="font-family:var(--mono)">${p.rate}%</td>
+        <td><span class="status-pill ${pc}">${pt}</span></td>
+        <td><a class="tx-link" href="https://explorer.solana.com/tx/${p.sig}?cluster=devnet" target="_blank">view ↗</a></td>
+      </tr>`;
+    }).join('');
+  }
 
-      canvas.width = width;
-      canvas.height = height;
+  function updateStats() {
+    // Update live stats in the stats section if needed
+  }
 
-      let time = 0;
+  // ── Auto-reconnect ──
+  window.addEventListener('load', async () => {
+    await new Promise(r => setTimeout(r, 500));
+    if (window.solana?.isPhantom && window.solana.isConnected && window.solana.publicKey) {
+      walletPublicKey = window.solana.publicKey; walletProvider = window.solana; onWalletConnected();
+    } else if (window.solflare?.isSolflare && window.solflare.isConnected && window.solflare.publicKey) {
+      walletPublicKey = window.solflare.publicKey; walletProvider = window.solflare; onWalletConnected();
+    }
+  });
 
-      function drawSimulation() {
-        ctx.fillStyle = 'rgba(10, 14, 12, 0.3)';
-        ctx.fillRect(0, 0, width, height);
+  // ── Three.js Hero ──
+  function initHeroScene() {
+    const canvas = document.getElementById('heroCanvas');
+    if (!canvas || !is3DEnabled) return;
+    const w = canvas.parentElement.clientWidth, h = canvas.parentElement.clientHeight;
+    const scene = new THREE.Scene();
+    const camera = new THREE.PerspectiveCamera(75, w/h, 0.1, 1000);
+    const renderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+    renderer.setSize(w, h); renderer.setClearColor(0x000000, 0);
+    camera.position.z = 3;
+    const shield = new THREE.Mesh(new THREE.BoxGeometry(1.5, 1.8, 0.3), new THREE.MeshPhongMaterial({ color: 0x1D9E75, emissive: 0x5DCAA5, emissiveIntensity: 0.3 }));
+    scene.add(shield);
+    const glow = new THREE.Mesh(new THREE.SphereGeometry(2.5, 32, 32), new THREE.MeshBasicMaterial({ color: 0x1D9E75, transparent: true, opacity: 0.1, wireframe: true }));
+    scene.add(glow);
+    const light = new THREE.PointLight(0x1D9E75, 1, 100); light.position.set(5,5,5); scene.add(light);
+    scene.add(new THREE.AmbientLight(0xffffff, 0.3));
+    const pg = new THREE.BufferGeometry();
+    const pos = new Float32Array(300);
+    for (let i = 0; i < 300; i += 3) { pos[i] = (Math.random()-.5)*10; pos[i+1] = (Math.random()-.5)*10; pos[i+2] = (Math.random()-.5)*10; }
+    pg.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+    const particles = new THREE.Points(pg, new THREE.PointsMaterial({ color: 0x1D9E75, size: 0.05, transparent: true, opacity: 0.6 }));
+    scene.add(particles);
+    (function animate() {
+      requestAnimationFrame(animate);
+      shield.rotation.x += 0.003; shield.rotation.y += 0.005; glow.rotation.y += 0.002;
+      const p = pg.attributes.position.array;
+      for (let i = 1; i < p.length; i += 3) { p[i] -= 0.01; if (p[i] < -5) p[i] = 5; }
+      pg.attributes.position.needsUpdate = true;
+      renderer.render(scene, camera);
+    })();
+    window.addEventListener('resize', () => { camera.aspect = canvas.parentElement.clientWidth/canvas.parentElement.clientHeight; camera.updateProjectionMatrix(); renderer.setSize(canvas.parentElement.clientWidth, canvas.parentElement.clientHeight); });
+  }
 
-        // Draw encrypted data particles
-        ctx.fillStyle = '#1D9E75';
-        for (let i = 0; i < 20; i++) {
-          const x = (width / 20) * i + Math.sin(time * 0.05 + i) * 20;
-          const y = height / 2 + Math.cos(time * 0.03 + i) * 30;
-          ctx.globalAlpha = 0.6 + Math.sin(time * 0.05 + i) * 0.4;
-          ctx.fillRect(x - 5, y - 5, 10, 10);
-        }
+  // ── Flow Diagram ──
+  function initFlowDiagram() {
+    const canvas = document.getElementById('flowCanvas');
+    if (!canvas || !is3DEnabled) return;
+    const ctx = canvas.getContext('2d');
+    canvas.width = canvas.offsetWidth; canvas.height = canvas.offsetHeight;
+    const w = canvas.width, h = canvas.height;
+    const steps = [{ label: 'Encrypt', icon: '🔐', x: 0.12, color: '#1D9E75' }, { label: 'MXE', icon: '⚙️', x: 0.37, color: '#5DCAA5' }, { label: 'ZK Proof', icon: '✓', x: 0.62, color: '#378ADD' }, { label: 'Solana', icon: '⛓', x: 0.87, color: '#1D9E75' }];
+    let t = 0;
+    (function draw() {
+      ctx.clearRect(0, 0, w, h);
+      ctx.fillStyle = 'rgba(10,14,12,0.4)'; ctx.fillRect(0, 0, w, h);
+      const cy = h / 2;
+      // line
+      ctx.strokeStyle = 'rgba(29,158,117,0.25)'; ctx.lineWidth = 2;
+      ctx.beginPath(); ctx.moveTo(w*0.12, cy); ctx.lineTo(w*0.88, cy); ctx.stroke();
+      // animated pulse
+      const px = w * 0.12 + (w * 0.76) * ((t % 120) / 120);
+      ctx.fillStyle = '#5DCAA5'; ctx.globalAlpha = 0.8;
+      ctx.beginPath(); ctx.arc(px, cy, 5, 0, Math.PI*2); ctx.fill();
+      ctx.globalAlpha = 1;
+      steps.forEach(s => {
+        const x = w * s.x;
+        ctx.fillStyle = s.color; ctx.globalAlpha = 0.9;
+        ctx.beginPath(); ctx.arc(x, cy, 38, 0, Math.PI*2); ctx.fill();
+        ctx.globalAlpha = 0.2; ctx.strokeStyle = s.color; ctx.lineWidth = 2;
+        ctx.beginPath(); ctx.arc(x, cy, 46 + Math.sin(t*0.05)*4, 0, Math.PI*2); ctx.stroke();
         ctx.globalAlpha = 1;
-
-        // Draw flow lines
-        ctx.strokeStyle = 'rgba(29, 158, 117, 0.5)';
-        ctx.lineWidth = 2;
-        ctx.beginPath();
-        ctx.moveTo(0, height / 2);
-        for (let i = 0; i < width; i += 20) {
-          ctx.lineTo(i, height / 2 + Math.sin(time * 0.05 + i * 0.01) * 20);
-        }
-        ctx.stroke();
-
-        // Draw status text
-        ctx.fillStyle = '#5DCAA5';
-        ctx.font = '14px "IBM Plex Mono"';
-        ctx.fillText('Computing in MXE Enclave...', 20, 30);
-
-        time++;
-        requestAnimationFrame(drawSimulation);
-      }
-
-      drawSimulation();
-    }
-
-    // App embed is ready - iframe will load the PrivateLend Perp app
-
-    // ─── Scroll Animation ───
-    const observerOptions = {
-      threshold: 0.1,
-      rootMargin: '0px 0px -50px 0px'
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach(entry => {
-        if (entry.isIntersecting) {
-          entry.target.classList.add('visible');
-          observer.unobserve(entry.target);
-        }
+        ctx.fillStyle = '#0a0e0c'; ctx.font = 'bold 20px Arial'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+        ctx.fillText(s.icon, x, cy);
+        ctx.fillStyle = '#e8f0eb'; ctx.font = '12px "IBM Plex Mono"'; ctx.textAlign = 'center';
+        ctx.fillText(s.label, x, cy + 60);
       });
-    }, observerOptions);
+      t++;
+      requestAnimationFrame(draw);
+    })();
+  }
 
-    document.querySelectorAll('.fade-in').forEach(el => {
-      observer.observe(el);
-    });
+  // ── Scroll Animation ──
+  const observer = new IntersectionObserver(entries => {
+    entries.forEach(e => { if (e.isIntersecting) { e.target.classList.add('visible'); observer.unobserve(e.target); } });
+  }, { threshold: 0.1 });
+  document.querySelectorAll('.fade-in').forEach(el => observer.observe(el));
 
-    // ─── Smooth Scroll ───
-    document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-      anchor.addEventListener('click', function (e) {
-        const href = this.getAttribute('href');
-        if (href !== '#') {
-          e.preventDefault();
-          const target = document.querySelector(href);
-          if (target) {
-            target.scrollIntoView({ behavior: 'smooth', block: 'start' });
-          }
-        }
-      });
+  // ── Smooth Scroll ──
+  document.querySelectorAll('a[href^="#"]').forEach(a => {
+    a.addEventListener('click', function(e) {
+      const href = this.getAttribute('href');
+      if (href !== '#') { e.preventDefault(); const t = document.querySelector(href); if (t) t.scrollIntoView({ behavior: 'smooth', block: 'start' }); }
     });
+  });
 
-    // Initialize on Load
-    window.addEventListener('load', () => {
-      if (is3DEnabled) {
-        setTimeout(() => {
-          initHeroScene();
-          initFlowDiagram();
-          initSimulationViz();
-        }, 100);
-      }
-    });
-  </script>
+  // ── Init ──
+  window.addEventListener('load', () => {
+    if (is3DEnabled) setTimeout(() => { initHeroScene(); initFlowDiagram(); }, 200);
+  });
+</script>
 </body>
 </html>
-Are there built-in templates available to select? - Manus
